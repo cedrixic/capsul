@@ -12,6 +12,7 @@ import os
 import re
 import json
 import inspect
+import warnings
 
 # CAPSUL import
 from .description_utils import load_xml_description
@@ -123,9 +124,71 @@ class AutoPipeline(Pipeline):
             self.scene_scale_factor = float(
                 self.proto[self.zoom_tag][0][self.zoom_attributes[0]])
 
+        # Check that all the pipeline mandatory plugs are connected and
+        # activate everything
+        unlinked_mandatory_plugs = []
+        for node in self.all_nodes():
+            node.activated = True
+            for plug_name, plug in node.plugs.iteritems():
+                plug.activated = True
+                if not plug.optional:
+                    if node.name == "":
+                        if plug.output and len(plug.links_from) == 0:
+                            unlinked_mandatory_plugs.append(
+                                "{0}.{1}".format(node.name, plug_name))
+                        elif not plug.output and len(plug.links_to) == 0:
+                            unlinked_mandatory_plugs.append(
+                                "{0}.{1}".format(node.name, plug_name))
+                    else:
+                        if plug.output and len(plug.links_to) == 0:
+                            unlinked_mandatory_plugs.append(
+                                "{0}.{1}".format(node.name, plug_name))
+                        elif not plug.output and len(plug.links_from) == 0:
+                            unlinked_mandatory_plugs.append(
+                                "{0}.{1}".format(node.name, plug_name))
+        if len(unlinked_mandatory_plugs) > 0:
+            warnings.warn("Mandatory controls not linked: " +
+                          " - ".join(unlinked_mandatory_plugs), SyntaxWarning)
+
+        # Activate the switch by setting the first switch declared value
+        for switch_name, switch_item in self._switches.iteritems():
+            switch_values = switch_item[0].keys()
+            self._anytrait_changed(switch_name, switch_values[0],
+                                   switch_values[0])
+
+    def update_nodes_and_plugs_activation(self):
+        """ Activation is static.
+        """
+        pass
+
     ###########################################################################
     # Private Members
     ###########################################################################
+
+    def _run_process(self):
+        """ Execution of the pipeline.
+
+        Since  no study configuration are set, execute the pipeline in a
+        sequential order, single-processor mode.
+
+        Returns
+        -------
+        returned: list
+            the execution return results of each node in the worflow
+        """
+        # Get all the process nodes to execute
+        graph, inlinkreps, outlinkreps = self._create_graph(
+            self, filter_inactive=True)
+
+        # Go through all processes
+        returned = []
+        for node_name, process in graph.topological_sort():
+
+            # Execute the process
+            node_ret = process()
+            returned.append(node_ret)
+
+        return returned
 
     def _update_graph(self, graph, iter_map, box_map, prefix=""):
         """ Dynamically update the graph representtion of a pipeline.
@@ -203,7 +266,7 @@ class AutoPipeline(Pipeline):
         box_names = [name for name in box.nodes if name != ""]
         for box_name in list(box_names):
             inner_box = box.nodes[box_name]
-            if filter_inactive and not inner_box.activated:
+            if filter_inactive and not inner_box.enabled:
                 continue
             inner_box = inner_box.process
             if isinstance(inner_box, Pipeline):
@@ -237,6 +300,7 @@ class AutoPipeline(Pipeline):
             # Parse link
             src_box_name, src_ctrl, dest_box_name, dest_ctrl = parse_link(
                 linkrep)
+            src_node = box.nodes[src_box_name]
 
             # Pipeline special case: flatening
             psrc_box_name = []
@@ -255,7 +319,7 @@ class AutoPipeline(Pipeline):
                    pdest_box_name.append(
                         "{0}.{1}".format(dest_box_name, sub_box_name))
 
-            # Add an inner link, skip inpout/output links, check that no
+            # Add an inner link, skip input/output links, check that no
             # inactive box is involved in this link
             if src_box_name == "":
                 if pdest_box_name != []:
@@ -270,6 +334,8 @@ class AutoPipeline(Pipeline):
                     if add_io:
                         graph.add_link(prefix + "inputs", prefix + dest_box_name)
             elif dest_box_name == "":
+                if filter_inactive and not src_node.enabled:
+                    continue
                 output_linkreps.setdefault(dest_ctrl, []).append(
                     (src_box_name, src_ctrl))
                 if add_io:
@@ -328,9 +394,16 @@ class AutoPipeline(Pipeline):
         # Create the switch control
         switch_paths = {}
         for pathdesc in switchdesc[self.switch_attributes[1]]:
-            path_name = pathdesc[self.switch_path[0]][0]
-            path_boxes = [box[self.unit_attributes[0]]
-                          for box in pathdesc[self.switch_path[1]]]
+            path_name = pathdesc[self.switch_path[0]]
+            if isinstance(path_name, list):
+                path_name = path_name[0]
+
+            # Switch on different boxes and allowing the do nothing case
+            path_boxes = []
+            if self.switch_path[1] in pathdesc:
+                path_boxes = [box[self.unit_attributes[0]]
+                              for box in pathdesc[self.switch_path[1]]]
+ 
             switch_paths[path_name] = path_boxes
         self._switch(switch_name, switch_paths)
 
@@ -356,9 +429,6 @@ class AutoPipeline(Pipeline):
                                          *switch_values))
         self._switches[switch_name] = (switch_paths, switch_boxes)
 
-        # Activate the switch
-        self._anytrait_changed(switch_name, switch_values[0], switch_values[0])
-
     def _anytrait_changed(self, name, old, new):
         """ Add an event to the switch trait that enables us to select
         the desired option.
@@ -377,14 +447,15 @@ class AutoPipeline(Pipeline):
 
             # Disable all the boxes in the switch structure
             for box_name in switch_boxes:
-                self.nodes[box_name].enabled = False
-
+                node = self.nodes[box_name]
+                node.enabled = False
+                node.activated = False
+       
             # Activate only the selected path
             for box_name in switch_paths[new]:
-                self.nodes[box_name].enabled = True
-
-            # Update the activation
-            self.update_nodes_and_plugs_activation()
+                node = self.nodes[box_name]
+                node.enabled = True
+                node.activated = True
 
     def _add_box(self, boxdesc):
         """ Add a box in the pipeline from its description.
