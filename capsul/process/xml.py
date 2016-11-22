@@ -13,6 +13,7 @@ import xml.etree.cElementTree as ET
 from ast import literal_eval
 
 from capsul.process.process import Process
+from capsul.process.traits_utils import is_trait_output
 
 from soma.controller.trait_utils import clone_trait
 from soma.utils.functiontools import getArgumentsSpecification
@@ -169,7 +170,7 @@ def create_xml_process(module, name, function, xml):
             n = child.get('name')
             trait = trait_from_xml(child)
             class_kwargs[n] = trait
-            if trait.output and not trait.input_filename:
+            if is_trait_output(trait) and not trait.input_filename:
                 function_outputs.append(n)
             else:
                 function_inputs.append(n)

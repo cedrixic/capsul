@@ -38,6 +38,7 @@ from soma.controller.trait_utils import get_trait_desc
 
 # Capsul import
 from capsul.utils.version_utils import get_tool_version
+from capsul.process.traits_utils import is_trait_output
 
 if sys.version_info[0] <= 3:
     unicode = str
@@ -102,7 +103,7 @@ class ProcessMeta(Controller.__class__):
         for n, possible_trait_definition in six.iteritems(attrs):
             if isinstance(possible_trait_definition, BaseTraitHandler):
                 possible_trait_definition._metadata['output'] \
-                    = bool(possible_trait_definition.output)
+                    = is_trait_output(possible_trait_definition)
                 possible_trait_definition._metadata['optional'] \
                     = bool(possible_trait_definition.optional)
 
@@ -176,10 +177,10 @@ class Process(six.with_metaclass(ProcessMeta, Controller)):
         boolean value before calling parent class add_trait.
         """
         if trait._metadata is not None:
-            trait._metadata['output'] = bool(trait.output)
+            trait._metadata['output'] = is_trait_output(trait)
             trait._metadata['optional'] = bool(trait.optional)
         else:
-            trait.output = bool(trait.output)
+            trait.output = is_trait_output(trait)
             trait.optional = bool(trait.optional)
         super(Process, self).add_trait(name, trait)
         
@@ -530,7 +531,7 @@ class Process(six.with_metaclass(ProcessMeta, Controller)):
         output = "\nINPUT SPECIFICATIONS\n\n"
         # self.traits(output=False) skips params with no output property
         for trait_name, trait in six.iteritems(self.user_traits()):
-            if not trait.output:
+            if not is_trait_output(trait):
                 output += "{0}: {1}\n".format(
                     trait_name, trait_ids(self.trait(trait_name)))
         return output
@@ -559,7 +560,7 @@ class Process(six.with_metaclass(ProcessMeta, Controller)):
         """
         output = {}
         for trait_name, trait in six.iteritems(self.user_traits()):
-            if not trait.output:
+            if not is_trait_output(trait):
                 output[trait_name] = getattr(self, trait_name)
         return output
 
@@ -657,7 +658,7 @@ class Process(six.with_metaclass(ProcessMeta, Controller)):
 
         # Get all the mandatory input traits
         mandatory_items = dict([x for x in six.iteritems(self.user_traits())
-                                if not x[1].output and not x[1].optional])
+                                if not is_trait_output(x[1]) and not x[1].optional])
         mandatory_items.update(self.traits(output=None, optional=False))
 
         # If we have mandatory inputs, get the corresponding string
@@ -994,7 +995,7 @@ class FileCopyProcess(Process):
 
         # Go through all the user traits
         for name, trait in six.iteritems(self.user_traits()):
-            if trait.output:
+            if is_trait_output(trait):
                 continue
             # Check if the target parameter is in the check list
             if name in self.inputs_to_copy:

@@ -20,6 +20,7 @@ from capsul.attributes.completion_engine_iteration \
 from capsul.pipeline.process_iteration import ProcessIteration
 from capsul.attributes.attributes_schema import ProcessAttributes, \
     EditableAttributes
+from capsul.process.traits_utils import is_trait_output
 from soma.fom import DirectoryAsDict
 from soma.path import split_path
 
@@ -255,7 +256,7 @@ class FomPathCompletionEngine(PathCompletionEngine):
         output_atp = process.study_config.modules_data.fom_atp['output']
 
         #Create completion
-        if process.trait(parameter).output:
+        if is_trait_output(process.trait(parameter)):
             atp = output_atp
             fom = output_fom
         else:
@@ -329,7 +330,7 @@ class FomProcessCompletionEngineIteration(ProcessCompletionEngineIteration):
 
         iter_attrib = set()
         for parameter in self.process.iterative_parameters:
-            if subprocess.trait(parameter).output:
+            if is_trait_output(subprocess.trait(parameter)):
                 atp = output_atp
             else:
                 atp = input_atp

@@ -17,6 +17,7 @@ from soma.sorted_dictionary import OrderedDict
 
 from capsul.process.xml import string_to_value
 from capsul.pipeline.pipeline_construction import PipelineConstructor
+from capsul.process.traits_utils import is_trait_output
 
 if sys.version_info[0] >= 3:
     unicode = str
@@ -265,7 +266,7 @@ def save_xml_pipeline(pipeline, xml_file):
         swnode.set('name', name)
         inputs = set()
         for plug_name, plug in six.iteritems(switch.plugs):
-            if plug.output:
+            if is_trait_output(plug):
                 elem = ET.SubElement(swnode, 'output')
                 elem.set('name', plug_name)
                 if plug.optional:
@@ -315,8 +316,8 @@ def save_xml_pipeline(pipeline, xml_file):
     def _write_links(pipeline, root):
         for node_name, node in six.iteritems(pipeline.nodes):
             for plug_name, plug in six.iteritems(node.plugs):
-                if (node_name == "" and not plug.output) \
-                        or (node_name != "" and plug.output):
+                if (node_name == "" and not is_trait_output(plug)) \
+                        or (node_name != "" and is_trait_output(plug)):
                     links = plug.links_to
                     for link in links:
                         if node_name == "":

@@ -13,6 +13,7 @@ import six
 
 # CAPSUL import
 from capsul.study_config.memory import Memory
+from capsul.process.traits_utils import is_trait_output
 
 # TRAIT import
 from traits.api import Undefined
@@ -75,7 +76,7 @@ def run_process(output_dir, process_instance, cachedir=None,
         for name, trait in six.iteritems(process_instance.user_traits()):
             value = process_instance.get_parameter(name)
             # Skip undefined trait attributes and outputs
-            if not trait.output and value is not Undefined:
+            if not is_trait_output(trait) and value is not Undefined:
                 # Store the input parameter
                 input_parameters[name] = value
         input_parameters = ["{0}={1}".format(name, value)

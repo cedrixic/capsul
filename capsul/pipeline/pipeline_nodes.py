@@ -35,6 +35,7 @@ from soma.controller import Controller
 from soma.sorted_dictionary import SortedDictionary
 from soma.utils.functiontools import SomaPartial
 from soma.utils.weak_proxy import weak_proxy, get_ref
+from capsul.process.traits_utils import is_trait_output
 
 
 class Plug(Controller):
@@ -402,7 +403,7 @@ class ProcessNode(Node):
         for parameter, trait in six.iteritems(self.process.user_traits()):
             if parameter in ('nodes_activation', 'selection_changed'):
                 continue
-            if trait.output:
+            if is_trait_output(trait):
                 outputs.append(dict(name=parameter,
                                     optional=bool(trait.optional),
                                     output=True))
@@ -724,7 +725,7 @@ class Switch(Node):
                 plug = self.plugs[input_name]
                 for link_spec in plug.links_from:
                     if isinstance(link_spec[2], PipelineNode) \
-                            and not link_spec[3].output:
+                            and not is_trait_output(link_spec[3]):
                         break
                 else:
                     setattr(self, input_name, new)
@@ -745,6 +746,81 @@ class Switch(Node):
 
 
 class CallbackNode(Node):
-    def __init__(self, *args, **kwargs):
-        super(CallbackNode, self).__init__(*args, **kwargs)
+
+    def __init__(self, pipeline, name, inputs, outputs, make_optional=(),
+                 input_types=None, output_types=None):
+        """ Generate a Callback Node
+
+        Parameters
+        ----------
+        pipeline: Pipeline (mandatory)
+            the pipeline object where the node is added
+        name: str (mandatory)
+            the callback node name
+        inputs: list (mandatory)
+            a list of options
+        outputs: list (mandatory)
+            a list of output parameters
+        make_optional: sequence (optional)
+            list of optional outputs.
+            These outputs will be made optional in the switch output. By
+            default they are mandatory.
+        input_types: sequence of traits (optional)
+            If given, this sequence sould have the same size as inputs. It
+            will specify each input parameter type (as a standard
+            trait).
+        output_types: sequence of traits (optional)
+            If given, this sequence sould have the same size as outputs. It
+            will specify each output parameter type (as a standard
+            trait).
+        """
+        #self.__block_output_propagation = False
+        
+        if not isinstance(inputs, list):
+            inputs = [inputs, ]
+        if input_types is not None:
+            if not isinstance(input_types, list) \
+                    and not isinstance(input_types, tuple):
+                raise ValueError(
+                    'input_types parameter should be a list or tuple')
+            if len(input_types) != len(inputs):
+                raise ValueError('input_types should have the same number of '
+                                 'elements as inputs')
+        else:
+            input_types = [Any(Undefined)] * len(inputs)
+            
+        if not isinstance(outputs, list):
+            outputs = [outputs, ]
+        if output_types is not None:
+            if not isinstance(output_types, list) \
+                    and not isinstance(output_types, tuple):
+                raise ValueError(
+                    'output_types parameter should be a list or tuple')
+            if len(output_types) != len(outputs):
+                raise ValueError('output_types should have the same number of '
+                                 'elements as outputs')
+        else:
+            output_types = [Any(Undefined)] * len(outputs)
+            
+        # private copy of outputs and inputs
+        self._inputs = inputs
+        self._outputs = outputs
+
+        # format inputs and outputs to inherit from Node class
+        node_inputs = [dict(name=i, optional=(i in make_optional)) 
+                       for i in inputs]
+        node_outputs = [dict(name=i, optional=(i in make_optional))
+                        for i in outputs]
+
+        super(CallbackNode, self).__init__(pipeline, name, node_inputs,
+                                           node_outputs)
+                                           
+        # add a trait for each input and each output
+        for i, trait in zip(inputs, input_types):
+            self.add_trait(i, trait)
+            self.trait(i).output = False
+        for i, trait in zip(outputs, output_types):
+            self.add_trait(i, trait)
+            self.trait(i).output = True
+            
         self.on_trait_change(self.callback)

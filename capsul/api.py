@@ -14,7 +14,9 @@ from capsul.pipeline.pipeline_nodes import Node
 from capsul.pipeline.pipeline_nodes import ProcessNode
 from capsul.pipeline.pipeline_nodes import PipelineNode
 from capsul.pipeline.pipeline_nodes import Switch
+from capsul.pipeline.pipeline_nodes import CallbackNode
+from capsul.pipeline.join_str_node  import JoinStrNode
 from capsul.study_config.process_instance import get_process_instance
 from capsul.study_config.study_config import StudyConfig
 from capsul.utils.finder import find_processes
-
+from capsul.process.traits_utils import is_trait_input, is_trait_output

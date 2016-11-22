@@ -7,6 +7,7 @@ from capsul.pipeline.pipeline import Graph, ProcessNode, Switch
 from capsul.attributes.attributes_factory import AttributesFactory
 from capsul.attributes.attributes_schema import ProcessAttributes, \
     EditableAttributes
+from capsul.process.traits_utils import is_trait_output
 import traits.api as traits
 from soma.utils.weak_proxy import weak_proxy, get_ref
 from soma.functiontools import SomaPartial
@@ -173,7 +174,7 @@ class ProcessCompletionEngine(traits.HasTraits):
             plug = self.process.pipeline_node.plugs.get(pname)
             if plug is None:
                 continue
-            if trait.output:
+            if is_trait_output(trait):
                 links = plug.links_from
             else:
                 links = plug.links_to

@@ -22,6 +22,7 @@ import sys
 
 # CAPSUL import
 from capsul.process.process import Process, ProcessResult
+from capsul.process.traits_utils import is_trait_output
 
 # NIPYPE import
 try:
@@ -123,7 +124,7 @@ class UnMemorizedProcess(object):
 
             # Split input and output traits
             is_input = True
-            if "output" in trait.__dict__ and trait.output:
+            if "output" in trait.__dict__ and is_trait_output(trait):
                 is_input = False
 
             # Skip undefined trait attributes and outputs
@@ -477,7 +478,7 @@ class MemorizedProcess(object):
 
             # Split input and output traits
             is_input = True
-            if "output" in trait.__dict__ and trait.output:
+            if "output" in trait.__dict__ and is_trait_output(trait):
                 is_input = False
 
             # Skip undefined trait attributes and outputs

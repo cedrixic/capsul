@@ -29,6 +29,7 @@ except ImportError:
 from capsul.pipeline.pipeline import Pipeline, PipelineNode, Switch, \
     ProcessNode
 from capsul.pipeline.process_iteration import ProcessIteration
+from capsul.process.traits_utils import is_trait_output
 from soma.controller import Controller
 
 if sys.version_info[0] >= 3:
@@ -258,8 +259,8 @@ def dot_graph_from_pipeline(pipeline, nodes_sizes={}, use_nodes_pos=False,
             nodes.append((id, node_name, node_props))
         has_inputs = False
         for plug_name, plug in six.iteritems(node.plugs):
-            if (plug.output and node_name != '') \
-                    or (not plug.output and node_name == ''):
+            if (is_trait_output(plug) and node_name != '') \
+                    or (not is_trait_output(plug) and node_name == ''):
                 if node_name == '':
                     has_inputs = True
                 links = plug.links_to
@@ -515,7 +516,7 @@ def disable_runtime_steps_with_existing_outputs(pipeline):
             process = node.process
             for param in node.plugs:
                 trait = process.trait(param)
-                if trait.output and (isinstance(trait.trait_type, traits.File)
+                if is_trait_output(trait) and (isinstance(trait.trait_type, traits.File)
                         or isinstance(trait.trait_type, traits.Directory)):
                     value = getattr(process, param)
                     if value is not None and value is not traits.Undefined \
@@ -597,7 +598,7 @@ def nodes_with_existing_outputs(pipeline, exclude_inactive=True,
                 if isinstance(value, basestring) \
                         and os.path.exists(value) \
                         and value not in input_files_list:
-                    if plug.output:
+                    if is_trait_output(plug):
                         plug_list.append((plug_name, value))
                     elif exclude_inputs:
                         input_files_list.add(value)
@@ -657,7 +658,7 @@ def nodes_with_missing_inputs(pipeline, recursive=True):
                       if new_name != '']
             continue
         for plug_name, plug in six.iteritems(node.plugs):
-            if not plug.output:
+            if not is_trait_output(plug):
                 trait = process.trait(plug_name)
                 if isinstance(trait.trait_type, traits.File) \
                         or isinstance(trait.trait_type, traits.Directory):
@@ -739,7 +740,7 @@ def where_is_plug_value_from(plug, recursive=True):
             # but it is handled the same way.
             # check their inputs
             # just if sibling, keep them as parent
-            if in_plug.output and parent is None:
+            if is_trait_output(in_plug) and parent is None:
                 new_parent = node
             else:
                 new_parent = parent
@@ -820,7 +821,7 @@ def dump_pipeline_state_as_dict(pipeline):
             comp.add(plug)
             # switches outputs should not be set (they will be through their
             # inputs)
-            if plug.output and isinstance(node, Switch):
+            if is_trait_output(plug) and isinstance(node, Switch):
                 allowed = False
             todo += [link[3] for link in plug.links_from
                      if link[3] not in comp]
@@ -952,7 +953,7 @@ def get_output_directories(process):
         dirs['directories'] = dirs_set
         for param_name in plugs:
             trait = process.trait(param_name)
-            if trait.output and isinstance(trait.trait_type, traits.File) \
+            if is_trait_output(trait) and isinstance(trait.trait_type, traits.File) \
                     or isinstance(trait.trait_type, traits.Directory):
                 value = getattr(process, param_name)
                 if value is not None and value is not traits.Undefined:

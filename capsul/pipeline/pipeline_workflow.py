@@ -29,6 +29,7 @@ from soma.sorted_dictionary import OrderedDict
 from .process_iteration import ProcessIteration
 from capsul.attributes import completion_engine_iteration
 from capsul.attributes.completion_engine import ProcessCompletionEngine
+from capsul.process.traits_utils import is_trait_output
 
 
 if sys.version_info[0] >= 3:
@@ -256,7 +257,7 @@ def workflow_from_pipeline(pipeline, study_config={}, disabled_nodes=None,
                         tval = temp_map[value]
                         tval = tval.__class__(tval)
                         tval.pattern = value.pattern
-                        if parameter.output:
+                        if is_trait_output(parameter):
                             output_replaced_paths.append(tval)
                         else:
                             if value in forbidden_temp:
@@ -439,7 +440,7 @@ def workflow_from_pipeline(pipeline, study_config={}, disabled_nodes=None,
                     #plug = node.plugs[param]
                     if isinstance(trait.trait_type, File) \
                             or isinstance(trait.trait_type, Directory):
-                        transfers[bool(trait.output)].setdefault(process, {})[
+                        transfers[is_trait_output(trait)].setdefault(process, {})[
                             param] = (transfer_item, path)
                     #output = not output # invert IO status
 
@@ -505,7 +506,7 @@ def workflow_from_pipeline(pipeline, study_config={}, disabled_nodes=None,
                     path = getattr(process, param)
                     if path is None or path is Undefined:
                         continue
-                    output = bool(trait.output)
+                    output = is_trait_output(trait)
                     existing_transfers = transfers[output].get(process, {})
                     existing_transfer = existing_transfers.get(param)
                     if existing_transfer:
@@ -569,7 +570,7 @@ def workflow_from_pipeline(pipeline, study_config={}, disabled_nodes=None,
             process = node.process
             otrans = transfers[1].get(process, None)
             for param, trait in six.iteritems(process.user_traits()):
-                if trait.output and (isinstance(trait.trait_type, File) \
+                if is_trait_output(trait) and (isinstance(trait.trait_type, File) \
                         or isinstance(trait.trait_type, Directory) \
                         or type(trait.trait_type) is Any):
                     path = getattr(process, param)
@@ -664,14 +665,14 @@ def workflow_from_pipeline(pipeline, study_config={}, disabled_nodes=None,
                 elif size != psize:
                     size_error = True
                     break
-                if trait.output:
+                if is_trait_output(trait):
                     if no_output_value is None:
                         no_output_value = False
                     elif no_output_value:
                         size_error = True
                         break
             else:
-                if trait.output:
+                if is_trait_output(trait):
                     if no_output_value is None:
                         no_output_value = True
                     elif not no_output_value:
@@ -713,13 +714,13 @@ def workflow_from_pipeline(pipeline, study_config={}, disabled_nodes=None,
 
             for parameter in it_process.iterative_parameters:
                 trait = it_process.trait(parameter)
-                if trait.output:
+                if is_trait_output(trait):
                     setattr(it_process, parameter, [])
             outputs = {}
             for iteration in xrange(size):
                 for parameter in it_process.iterative_parameters:
                     if not no_output_value \
-                            or not it_process.trait(parameter).output:
+                            or not is_trait_output(it_process.trait(parameter)):
                         setattr(it_process.process, parameter,
                                 getattr(it_process, parameter)[iteration])
 
@@ -732,7 +733,7 @@ def workflow_from_pipeline(pipeline, study_config={}, disabled_nodes=None,
 
                 for parameter in it_process.iterative_parameters:
                     trait = it_process.trait(parameter)
-                    if trait.output:
+                    if is_trait_output(trait):
                         outputs.setdefault(
                             parameter,[]).append(getattr(it_process.process,
                                                          parameter))

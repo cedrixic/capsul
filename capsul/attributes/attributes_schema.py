@@ -15,6 +15,7 @@ from soma.sorted_dictionary import OrderedDict
 
 from soma.controller import Controller
 from soma.functiontools import partial, SomaPartial
+from capsul.process.traits_utils import is_trait_output
 
     
 class AttributesSchema(object):
@@ -89,7 +90,7 @@ class ProcessAttributes(Controller):
     def get_parameters_attributes(self):
         pa = {}
         for parameter, trait in six.iteritems(self._process.user_traits()):
-            if trait.output:
+            if is_trait_output(trait):
                 if hasattr(self._process, 'id'):
                     process_name = self._process.id
                 else:

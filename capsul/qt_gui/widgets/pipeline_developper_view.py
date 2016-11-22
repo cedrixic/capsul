@@ -24,12 +24,13 @@ import six
 # Capsul import
 from soma.qt_gui.qt_backend import QtCore, QtGui
 from soma.sorted_dictionary import SortedDictionary
-from capsul.api import Switch, PipelineNode
+from capsul.api import Switch, PipelineNode, CallbackNode
 from capsul.pipeline import pipeline_tools
 from capsul.api import Pipeline
 from capsul.api import Process
 from capsul.api import get_process_instance
 from capsul.pipeline.process_iteration import ProcessIteration
+from capsul.process.traits_utils import is_trait_output
 from capsul.qt_gui.widgets.pipeline_file_warning_widget \
     import PipelineFileWarningWidget
 import capsul.pipeline.xml as capsulxml
@@ -346,8 +347,8 @@ class NodeGWidget(QtGui.QGraphicsItem):
             selections = []
 
         for in_param, pipeline_plug in six.iteritems(self.parameters):
-            output = (not pipeline_plug.output if self.name in (
-                'inputs', 'outputs') else pipeline_plug.output)
+            output = (not is_trait_output(pipeline_plug) if self.name in (
+                'inputs', 'outputs') else is_trait_output(pipeline_plug))
             if output:
                 continue
             param_text = self._parameter_text(in_param)
@@ -369,8 +370,8 @@ class NodeGWidget(QtGui.QGraphicsItem):
             pos = pos + param_name.boundingRect().size().height()
 
         for out_param, pipeline_plug in six.iteritems(self.parameters):
-            output = (not pipeline_plug.output if self.name in (
-                'inputs', 'outputs') else pipeline_plug.output)
+            output = (not is_trait_output(pipeline_plug) if self.name in (
+                'inputs', 'outputs') else is_trait_output(pipeline_plug))
             if not output:
                 continue
             param_text = self._parameter_text(out_param)
@@ -405,8 +406,8 @@ class NodeGWidget(QtGui.QGraphicsItem):
         has_output = False
 
         for in_param, pipeline_plug in six.iteritems(self.parameters):
-            output = (not pipeline_plug.output if self.name in (
-                'inputs', 'outputs') else pipeline_plug.output)
+            output = (not is_trait_output(pipeline_plug) if self.name in (
+                'inputs', 'outputs') else is_trait_output(pipeline_plug))
             if output:
                 has_output = True
             else:
@@ -526,8 +527,8 @@ class NodeGWidget(QtGui.QGraphicsItem):
     def _create_parameter(self, param_name, pipeline_plug):
         plug_width = 12
         margin = 5
-        output = (not pipeline_plug.output if self.name in (
-            'inputs', 'outputs') else pipeline_plug.output)
+        output = (not is_trait_output(pipeline_plug) if self.name in (
+            'inputs', 'outputs') else is_trait_output(pipeline_plug))
         if self.logical_view:
             if output:
                 param_name = 'outputs'
@@ -592,8 +593,8 @@ class NodeGWidget(QtGui.QGraphicsItem):
         bottom_pos = 0
         if param_item:
             for param_name, pipeline_plug in six.iteritems(self.parameters):
-                output = (not pipeline_plug.output if self.name in (
-                    'inputs', 'outputs') else pipeline_plug.output)
+                output = (not is_trait_output(pipeline_plug) if self.name in (
+                    'inputs', 'outputs') else is_trait_output(pipeline_plug))
                 if output:
                     params = self.out_params
                     plugs = self.out_plugs
@@ -673,8 +674,8 @@ class NodeGWidget(QtGui.QGraphicsItem):
         self.box_title.setBrush(self.title_brush)
         self.box.setBrush(self.bg_brush)
         for param, pipeline_plug in six.iteritems(self.parameters):
-            output = (not pipeline_plug.output if self.name in (
-                'inputs', 'outputs') else pipeline_plug.output)
+            output = (not is_trait_output(pipeline_plug) if self.name in (
+                'inputs', 'outputs') else is_trait_output(pipeline_plug))
             if output:
                 plugs = self.out_plugs
                 params = self.out_params
@@ -968,7 +969,7 @@ class PipelineScene(QtGui.QGraphicsScene):
         self.gnodes[name] = gnode
 
     def add_node(self, node_name, node):
-        if isinstance(node, Switch):
+        if isinstance(node, Switch) or isinstance(node, CallbackNode):
             process = node
         if hasattr(node, 'process'):
             process = node.process
@@ -1066,7 +1067,7 @@ class PipelineScene(QtGui.QGraphicsScene):
         pipeline_inputs = SortedDictionary()
         pipeline_outputs = SortedDictionary()
         for name, plug in six.iteritems(pipeline.nodes[''].plugs):
-            if plug.output:
+            if is_trait_output(plug):
                 pipeline_outputs[name] = plug
             else:
                 pipeline_inputs[name] = plug
@@ -1121,13 +1122,13 @@ class PipelineScene(QtGui.QGraphicsScene):
                 if node_name == 'inputs':
                     pipeline_inputs = SortedDictionary()
                     for name, plug in six.iteritems(node.plugs):
-                        if not plug.output:
+                        if not is_trait_output(plug):
                             pipeline_inputs[name] = plug
                     gnode.parameters = pipeline_inputs
                 else:
                     pipeline_outputs = SortedDictionary()
                     for name, plug in six.iteritems(node.plugs):
-                        if plug.output:
+                        if is_trait_output(plug):
                             pipeline_outputs[name] = plug
                     gnode.parameters = pipeline_outputs
             else:
@@ -1150,7 +1151,7 @@ class PipelineScene(QtGui.QGraphicsScene):
                 pipeline_inputs = SortedDictionary()
                 pipeline_outputs = SortedDictionary()
                 for name, plug in six.iteritems(node.plugs):
-                    if plug.output:
+                    if is_trait_output(plug):
                         pipeline_outputs[name] = plug
                     else:
                         pipeline_inputs[name] = plug
@@ -1264,7 +1265,7 @@ class PipelineScene(QtGui.QGraphicsScene):
                 pipeline_inputs = SortedDictionary()
                 pipeline_outputs = SortedDictionary()
                 for name, plug in six.iteritems(node.plugs):
-                    if plug.output:
+                    if is_trait_output(plug):
                         pipeline_outputs['outputs'] = plug
                     else:
                         pipeline_inputs['inputs'] = plug
@@ -1435,7 +1436,7 @@ class PipelineScene(QtGui.QGraphicsScene):
             proc = src
             if hasattr(src, 'process'):
                 proc = src.process
-        if splug.output:
+        if is_trait_output(splug):
             output = '<font color="#d00000">output</font>'
         else:
             output = '<font color="#00d000">input</font>'
@@ -2318,7 +2319,7 @@ class PipelineDevelopperView(QtGui.QGraphicsView):
         node = pipeline.nodes[node_name]
         # FIXME: should rather be in a method Pipeline.remove_node()
         for plug_name, plug in six.iteritems(node.plugs):
-            if not plug.output:
+            if not is_trait_output(plug):
                 for link_def in list(plug.links_from):
                     src_node, src_plug = link_def[:2]
                     link_descr = '%s.%s->%s.%s' \
@@ -2348,8 +2349,8 @@ class PipelineDevelopperView(QtGui.QGraphicsView):
             if parameter_name in ("nodes_activation", "selection_changed"):
                 continue
             if (((node_name, parameter_name) not in pipeline.do_not_export and
-                ((outputs and plug.output and not plug.links_to) or
-                    (inputs and not plug.output and not plug.links_from)) and
+                ((outputs and is_trait_output(plug) and not plug.links_to) or
+                    (inputs and not is_trait_output(plug) and not plug.links_from)) and
                 (optional or not node.get_trait(parameter_name).optional))):
                 pipeline.export_parameter(node_name, parameter_name)
 
@@ -2790,9 +2791,9 @@ class PipelineDevelopperView(QtGui.QGraphicsView):
         pnode = pipeline.pipeline_node
         to_del = []
         for plug_name, plug in six.iteritems(pnode.plugs):
-            if plug.output and len(plug.links_from) == 0:
+            if is_trait_output(plug) and len(plug.links_from) == 0:
                 to_del.append(plug_name)
-            elif not plug.output and len(plug.links_to) == 0:
+            elif not is_trait_output(plug) and len(plug.links_to) == 0:
                 to_del.append(plug_name)
         for plug_name in to_del:
             pipeline.remove_trait(plug_name)

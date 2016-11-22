@@ -36,6 +36,7 @@ from capsul.pipeline.pipeline_workflow import (
     workflow_from_pipeline, local_workflow_run)
 from capsul.pipeline.pipeline_nodes import Node
 from capsul.study_config.process_instance import get_process_instance
+from capsul.process.traits_utils import is_trait_output
 
 if sys.version_info[0] >= 3:
     basestring = str
@@ -286,7 +287,7 @@ class StudyConfig(Controller):
         
         if self.create_output_directories:
             for name, trait in process_or_pipeline.user_traits().items():
-                if trait.output and isinstance(trait.handler, (File, Directory)):
+                if is_trait_output(trait) and isinstance(trait.handler, (File, Directory)):
                     value = getattr(process_or_pipeline, name)
                     if value is not Undefined and value:
                         base = os.path.dirname(value)

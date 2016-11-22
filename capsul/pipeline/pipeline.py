@@ -33,12 +33,14 @@ except ImportError:
 
 # Capsul import
 from capsul.process.process import Process, NipypeProcess
+from capsul.process.traits_utils import is_trait_output
 from .topological_sort import GraphNode
 from .topological_sort import Graph
 from .pipeline_nodes import Plug
 from .pipeline_nodes import ProcessNode
 from .pipeline_nodes import PipelineNode
 from .pipeline_nodes import Switch
+from .pipeline_nodes import CallbackNode
 
 # Soma import
 from soma.controller import Controller
@@ -254,8 +256,8 @@ class Pipeline(Process):
                 if parameter_name in ("nodes_activation", "selection_changed"):
                     continue
                 if (((node_name, parameter_name) not in self.do_not_export and
-                    ((plug.output and not plug.links_to) or
-                     (not plug.output and not plug.links_from)) and
+                    ((is_trait_output(plug) and not plug.links_to) or
+                     (not is_trait_output(plug) and not plug.links_from)) and
                     (include_optional or not
                      self.nodes[node_name].get_trait(
                         parameter_name).optional))):
@@ -556,6 +558,145 @@ class Pipeline(Process):
 
         self._set_subprocess_context_name(node, name)
 
+  
+    def declare_inout(self, name, parameter):
+        """ Add an automatic mechanism to have in/out parameters
+
+        Parameters
+        ----------
+        name: str (mandatory)
+            the name of the node (has to be unique)
+        parameter: str (mandatory)
+            the name of the parameter to be changed (has to be unique)
+
+        Examples
+        --------
+        >>> pipeline.declare_inout('node_name', 'param1')
+
+        will change the parameter type to both input and output
+
+        See Also
+        --------
+        capsul.pipeline.pipeline_nodes.CallbackNode
+        """
+        if not name in self.nodes :
+          raise ValueError("Pipeline does not contain node {0}".format(name))
+        node = self.nodes[name]
+        node.user_traits
+        
+        
+        
+    
+  
+    def add_callback(self, name, callback_type):
+        """ Add a callback node in the pipeline
+
+        Parameters
+        ----------
+        name: str (mandatory)
+            name for the callback node (has to be unique)
+        callback_type: type derived from CallbackNode (mandatory).
+
+        Examples
+        --------
+        >>> pipeline.add_callback('callback_node',
+                                  JoinStrCallbackNode)
+
+        will create a callback node that will update outputs on traits change
+
+        See Also
+        --------
+        capsul.pipeline.pipeline_nodes.CallbackNode
+        """
+        # Check the unicity of the name we want to insert
+        if name in self.nodes:
+            raise ValueError("Pipeline cannot have two nodes with the same "
+                             "name: {0}".format(name))
+
+        if not issubclass(callback_type, CallbackNode):
+            raise TypeError("{0} must be a subclass of type: {1}".format(
+                            callback_type, CallbackNode))
+                             
+        # Create the node
+        node = callback_type(self, name)
+        self.nodes[name] = node
+        self._set_subprocess_context_name(node, name)
+#    
+#    def add_node(self, name, node_type, inputs, outputs, export=True,
+#                 make_optional=(), output_types=None):
+#        """ Add a node in the pipeline
+#
+#        Parameters
+#        ----------
+#        name: str (mandatory)
+#            name for the node (has to be unique)
+#        node_type: type (mandatory)
+#            type name for the node to be added
+#        inputs: list of str (mandatory)
+#            names for inputs.
+#        outputs: list of str (mandatory)
+#            names for outputs.
+#        export: bool (optional)
+#            if True, export the node trigger to the parent pipeline with
+#            ``name`` as parameter name
+#        make_optional: sequence (optional)
+#            list of optional outputs.
+#            These outputs will be made optional in the switch output. By
+#            default they are mandatory.
+#        output_types: sequence of traits (optional)
+#            If given, this sequence sould have the same size as outputs. It
+#            will specify each switch output parameter type (as a standard
+#            trait). Input parameters for each input block will also have this
+#            type.
+#
+#        Examples
+#        --------
+#        >>> pipeline.add_node('callback_node', ['in1', 'in2'],
+#                                ['out1', 'out2'])
+#
+#        will create a switch with 4 inputs and 2 outputs:
+#        inputs: "in1_switch_out1", "in2_switch_out1", "in1_switch_out2",
+#        "in2_switch_out2"
+#        outputs: "out1", "out2"
+#
+#        See Also
+#        --------
+#        capsul.pipeline.pipeline_nodes.Node
+#        capsul.pipeline.pipeline_nodes.Process
+#        capsul.pipeline.pipeline_nodes.Switch
+#        """
+#        # Check the unicity of the name we want to insert
+#        if name in self.nodes:
+#            raise ValueError("Pipeline cannot have two nodes with the same "
+#                             "name: {0}".format(name))
+#
+#        if (isinstance(node_type, type) and 
+#            issubclass(node_type, Node)):
+#            if issubclass(node_type, Switch):
+#                # Create the node
+#                node = self.add_switch( name, inputs, outputs, 
+#                                        make_optional=make_optional,
+#                                        export_switch = export,
+#                                        output_types=output_types)
+#            elif issubclass(node_type, CallbackNode):
+#                node = self.add_callback( name, inputs, outputs, 
+#                                          make_optional=make_optional,
+#                                          export_switch = export,
+#                                          output_types=output_types )
+#                
+#        else:
+#          
+#        if node is not None:
+#            self.nodes[name] = node
+#            # Export the switch controller to the pipeline node
+#            if export_node:
+#              self.export_parameter(name, "switch", name)
+#
+#        if switch_value:
+#            node.switch = switch_value
+#
+#        self._set_subprocess_context_name(node, name)
+#        
     def parse_link(self, link):
         """ Parse a link comming from export_parameter method.
 
@@ -653,10 +794,10 @@ class Pipeline(Process):
          dest_plug) = self.parse_link(link)
 
         # Assure that pipeline plugs are not linked
-        if not source_plug.output and source_node is not self.pipeline_node:
+        if not is_trait_output(source_plug) and source_node is not self.pipeline_node:
             raise ValueError("Cannot link from a pipeline input "
                              "plug: {0}".format(link))
-        if dest_plug.output and dest_node is not self.pipeline_node:
+        if is_trait_output(dest_plug) and dest_node is not self.pipeline_node:
             raise ValueError("Cannot link to a pipeline output "
                              "plug: {0}".format(link))
 
@@ -676,7 +817,7 @@ class Pipeline(Process):
                 isinstance(source_node, ProcessNode)):
             source_trait = source_node.process.trait(source_plug_name)
             dest_trait = dest_node.process.trait(dest_plug_name)
-            if source_trait.output and not dest_trait.output:
+            if is_trait_output(source_trait) and not is_trait_output(dest_trait):
                 dest_trait.connected_output = True
 
         # Propagate the description in case of destination switch node
@@ -794,7 +935,7 @@ class Pipeline(Process):
 
         # Do not forget to link the node with the pipeline node
 
-        if trait.output:
+        if is_trait_output(trait):
             link_desc = "{0}.{1}->{2}".format(
                 node_name, plug_name, pipeline_parameter)
             self.add_link(link_desc,  weak_link)
@@ -864,7 +1005,7 @@ class Pipeline(Process):
             else:
                 # Look for input plugs that can be activated
                 for plug_name, plug in six.iteritems(node.plugs):
-                    if plug.output:
+                    if is_trait_output(plug):
                         # ignore output plugs
                         continue
                     if plug.enabled and not plug.activated:
@@ -887,7 +1028,7 @@ class Pipeline(Process):
                 node.activated = True
                 # If node is activated, activate enabled output plugs
                 for plug_name, plug in six.iteritems(node.plugs):
-                    if plug.output and plug.enabled:
+                    if is_trait_output(plug) and plug.enabled:
                         if not plug.activated:
                             plug.activated = True
                             plugs_activated.append((plug_name, plug))
@@ -939,7 +1080,7 @@ class Pipeline(Process):
         # If node has already been  deactivated there is nothing to do
         if node.activated:
             deactivate_node = bool([plug for plug in node.plugs.itervalues()
-                                    if plug.output])
+                                    if is_trait_output(plug)])
             for plug_name, plug in six.iteritems(node.plugs):
                 # Check all activated plugs
                 if plug.activated:
@@ -948,7 +1089,7 @@ class Pipeline(Process):
                         continue
                     output = plug.output
                     if (isinstance(node, PipelineNode) and
-                       node is not self.pipeline_node and output):
+                       node is not self.pipeline_node and is_trait_output(plug)):
                         plug_activated = (
                             check_plug_activation(plug, plug.links_to) and
                             check_plug_activation(plug, plug.links_from))
@@ -971,7 +1112,7 @@ class Pipeline(Process):
                                 node is self.pipeline_node):
                             node.activated = False
                             break
-                if plug.output and plug.activated:
+                if is_trait_output(plug) and plug.activated:
                     deactivate_node = False
             if deactivate_node:
                 node.activated = False
@@ -1306,7 +1447,7 @@ class Pipeline(Process):
                         not isinstance(value,list)):
                 continue
             trait = node.get_trait(plug_name)
-            if not trait.output \
+            if not is_trait_output(trait) \
                     or (not isinstance(trait.trait_type, traits.File)
                         and not isinstance(trait.trait_type,
                                            traits.Directory)
@@ -1426,7 +1567,7 @@ class Pipeline(Process):
             # temporary files (unless they are connected with an output one,
             # which will do the job)
             for plug_name, plug in six.iteritems(node.plugs):
-                if not plug.enabled or not plug.output or \
+                if not plug.enabled or not is_trait_output(plug) or \
                         (not plug.activated and plug.optional):
                     continue
                 parameter = process.trait(plug_name)
@@ -2020,7 +2161,7 @@ class Pipeline(Process):
             plug = plugs.get(param)
             if not plug:
                 continue
-            if trait.output:
+            if is_trait_output(trait):
                 links = plug.links_from
             else:
                 links = plug.links_to
@@ -2035,4 +2176,3 @@ class Pipeline(Process):
                 if exclusive:
                     groups = [groups[0]]
                 trait.groups = groups
-

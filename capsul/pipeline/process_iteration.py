@@ -13,6 +13,7 @@ from traits.api import List, Undefined
 from capsul.process.process import Process
 from capsul.study_config.process_instance import get_process_instance
 from capsul.attributes.completion_engine import ProcessCompletionEngine
+from capsul.process.traits_utils import is_trait_output
 
 if sys.version_info[0] >= 3:
     xrange = range
@@ -83,14 +84,14 @@ class ProcessIteration(Process):
                 elif size != psize:
                     size_error = True
                     break
-                if trait.output:
+                if is_trait_output(trait):
                     if no_output_value is None:
                         no_output_value = False
                     elif no_output_value:
                         size_error = True
                         break
             else:
-                if trait.output:
+                if is_trait_output(trait):
                     if no_output_value is None:
                         no_output_value = True
                     elif not no_output_value:
@@ -113,12 +114,12 @@ class ProcessIteration(Process):
         if no_output_value:
             for parameter in self.iterative_parameters:
                 trait = self.trait(parameter)
-                if trait.output:
+                if is_trait_output(trait):
                     setattr(self, parameter, [])
             outputs = {}
             for iteration in xrange(size):
                 for parameter in self.iterative_parameters:
-                    if not no_output_value or not self.trait(parameter).output:
+                    if not no_output_value or not is_trait_output(self.trait(parameter)):
                         setattr(self.process, parameter,
                                 getattr(self, parameter)[iteration])
                 # operate completion
@@ -126,7 +127,7 @@ class ProcessIteration(Process):
                 self.process()
                 for parameter in self.iterative_parameters:
                     trait = self.trait(parameter)
-                    if trait.output:
+                    if is_trait_output(trait):
                         outputs.setdefault(parameter,[]).append(
                             getattr(self.process, parameter))
                         # reset empty value
