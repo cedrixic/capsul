@@ -19,9 +19,23 @@ def is_trait_input(trait):
     out: bool
       True if trait is an input,
       False if trait's parameter is defined as False, or is not defined (None).
+      Possible cases : 
+      	.input	.output		result
+      	 True	 True		 True
+      	 True	 False		 True
+      	 True	 None		 True
+      	 False	 True		 False
+      	 False   False		 True
+      	 False	 None		 True
+      	 None	 True		 False
+      	 None    False		 True
+      	 None 	 None		 True
     """
-  
-    return bool(trait.input)
+    
+    if not trait.output and not bool(trait.input) :
+    	return False
+    else:
+        return True
 
 
 def is_trait_output(trait):
@@ -38,6 +52,17 @@ def is_trait_output(trait):
     out: bool
       True if trait is an input,
       False if trait's parameter is defined as False, or is not defined (None).
+      Possible cases : 
+      	.input	.output		result
+      	 True	 True		 True
+      	 True	 False		 False
+      	 True	 None		 False
+      	 False	 True		 True
+      	 False   False		 False
+      	 False	 None		 False
+      	 None	 True		 True
+      	 None    False		 False
+      	 None 	 None		 False
     """
     
     return bool(trait.output)
