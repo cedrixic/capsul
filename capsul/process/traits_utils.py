@@ -21,18 +21,18 @@ def is_trait_input(trait):
       False if trait's parameter is defined as False, or is not defined (None).
       Possible cases : 
       	.input	.output		result
-      	 True	 True		 True
-      	 True	 False		 True
-      	 True	 None		 True
-      	 False	 True		 False
-      	 False   False		 True
-      	 False	 None		 True
-      	 None	 True		 False
-      	 None    False		 True
-      	 None 	 None		 True
+      	 True	         True		 True
+      	 True	         False		 True
+      	 True	         None		 True
+      	 False	   True		 False
+      	 False         False		 True
+      	 False	   None		 True
+      	 None	         True		 False
+      	 None          False		 True
+      	 None 	   None		 True
     """
     
-    if not trait.output and not bool(trait.input) :
+    if trait.output and not bool(trait.input) :
     	return False
     else:
         return True
