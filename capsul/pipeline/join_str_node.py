@@ -25,6 +25,12 @@ That means:
 param1 value + param2 value to param1_out and param3 value + param2 value to param3_out
 - Add links 'CallbackNode.param1_out->Process.param1' and 'CallbackNode.param3_out->Process.param3'
 
+
+TODO :
+
+- output must be delared as input/output to propagate value
+
+
 '''
 class JoinStrCallbackNode(CallbackNode):
     def __init__(self, pipeline, name, **kwargs):     
@@ -50,11 +56,6 @@ class RemoveStrCallbackNode(CallbackNode):
                                                 input_types=[String, String],
                                                 output_types=[String])
                                                 
-#      super(RemoveStrCallbackNode, self).__init__(pipeline, name, 
-#                                                ['str_rem_in1', 'str_rem_in2'],
-#                                                ['str_rem_out'],
-#                                                input_types=[String, String],
-#                                                output_types=[String])
 
         
     def callback(self, *args, **kwargs):
@@ -65,12 +66,6 @@ class RemoveStrCallbackNode(CallbackNode):
          self.str_in1.endswith(self.str_in2):   
         
         self.str_out = self.str_in1[:-len(self.str_in2)]
-#      if self.str_rem_in1 is not Undefined and \
-#         self.str_rem_in2 is not Undefined and \
-#         self.str_rem_in1.endswith(self.str_rem_in2):   
-#        
-#        self.str_rem_out = self.str_rem_in1[:-len(self.str_rem_in2)]
-        
 #        print('JoinStrCallbackNode->callback: str_out:', self.str_out)
   
 class JoinStrNode(Pipeline):
@@ -82,38 +77,56 @@ class JoinStrNode(Pipeline):
         #self.process = process
         self.add_process('internal_process', process)
                 
+        verbose = False
+#        verbose = True
+        
         i = 0
         t = False
+        print('Iterate through parameters dictionary...')
         for param_name, param_val in six.iteritems(param_dict) :
-          print('Parameter : ', param_name, ' - Value : ', param_val)
+          print('\nParameter : ', param_name, ' - Value : ', param_val)
           
           # Get process traits for param_name to determine direction
 #          output = process.class_traits()[param_name].output
 #          input = process.class_traits()[param_name].input
           optional = process.class_traits()[param_name].optional
+#          optional = 'youpi'
           
           input = is_trait_input(process.class_traits()[param_name])
-          print('TEST INPUT : ', input)
           output = is_trait_output(process.class_traits()[param_name])
-          print('TEST OUTPUT : ', output)
+          
+          if verbose : 
+            print('TEST INPUT : ', input)
+            print('TEST OUTPUT : ', output)
           
           # Add pippeline new param_name trait
+            print('!!ADDING TRAIT!!')
           self.add_trait(param_name, String(output = output, 
                                             input = True,
                                             optional = optional))
-          print('After adding\n\tTEST INPUT : ',
-                is_trait_input(process.class_traits()[param_name]),
-                '\n\tTEST OUTPUT : ',
-                is_trait_output(process.class_traits()[param_name]))
+#          process.class_traits()[param_name].input = True
+          if verbose : 
+            print('After adding\n\tTEST INPUT : ',
+                  is_trait_input(self.traits()[param_name]),
+                  '\n\tTEST OUTPUT : ',
+                  is_trait_output(self.traits()[param_name]),
+                  '\n\tTEST OPTIONAL : ',
+                  process.class_traits()[param_name].optional)
 
 #          print('export_parameter:', 'self', param_name)
 #          self.export_parameter( self, param_name)
 
 #          if not param_val in process.class_traits():
-          if not t:
-            print('\tadd_trait: ', param_val)
-            self.add_trait(param_val, String(output = False, optional=True))
-            t = True
+#          print(self.traits())
+#          print(str(self.traits()))
+
+#          Adding offset as a trait only if does not exists yet (to check!!)
+
+          if not self.traits().get(param_val) :
+            self.add_trait(param_val, String(output = False, 
+                                              input = True,
+                                              optional = True))
+            
             
           param_val = param_dict[param_name]
           callback_node_name = "JoinStrCallbackNode_" + str(i)
@@ -121,25 +134,41 @@ class JoinStrNode(Pipeline):
 #          self.add_callback(callback_node_name, JoinStrCallbackNode)
 #          self.add_callback(callback_remove_node_name, RemoveStrCallbackNode)
           if output:
-            print('\tplug type : output')
+            #add removeCallback
             self.add_callback(callback_remove_node_name, RemoveStrCallbackNode)
-            print('\tadd_link:', 'internal_process.' + param_name + '->' + callback_remove_node_name + '.str_in1')
             self.add_link('internal_process.' + param_name + '->' + callback_remove_node_name + '.str_in1')
-            print('\tadd_link:', callback_remove_node_name + '.str_out->' + param_name)
             self.add_link( callback_remove_node_name + '.str_out->' + param_name)
-            print('\tadd_link:', param_val + '->' + callback_remove_node_name + '.str_in2')
             self.add_link(param_val + '->' + callback_remove_node_name + '.str_in2')
-            
-            
-          else:
-            print('\tplug type : input')
+            #addJoinCallback
             self.add_callback(callback_node_name, JoinStrCallbackNode)
-            print('\tadd_link:', param_name + '->' + callback_node_name + '.str_in1')
             self.add_link(param_name + '->' + callback_node_name + '.str_in1')
-            print('\tadd_link:', callback_node_name + '.str_out->internal_process.' + param_name)
-            self.add_link( callback_node_name + '.str_out->internal_process.' + param_name)
-            print('\tadd_link:', param_val + '->' + callback_node_name + '.str_in2')
+            self.add_link( callback_node_name + '.str_out->' + callback_remove_node_name + '.str_in1')
             self.add_link(param_val + '->' + callback_node_name + '.str_in2')
+            
+            if verbose :
+              print('\tplug type : output')
+              print('\tadd_link:', 'internal_process.' + param_name + '->' + callback_remove_node_name + '.str_in1')
+              print('\tadd_link:', callback_remove_node_name + '.str_out->' + param_name)
+              print('\tadd_link:', param_val + '->' + callback_remove_node_name + '.str_in2')
+              print('\tplug type : output, creating joinCallback')
+              print('\tadd_link:', param_name + '->' + callback_node_name + '.str_in1')
+              print('\tadd_link:', callback_node_name + '.str_out->' + callback_remove_node_name + '.str_in1')
+              print('\tadd_link:', param_val + '->' + callback_node_name + '.str_in2')
+            
+            
+#          else:
+          if input:
+            self.add_callback(callback_node_name, JoinStrCallbackNode)
+            self.add_link(param_name + '->' + callback_node_name + '.str_in1')
+            self.add_link( callback_node_name + '.str_out->internal_process.' + param_name)
+            self.add_link(param_val + '->' + callback_node_name + '.str_in2')
+            
+            if verbose :
+              
+              print('\tplug type : input')
+              print('\tadd_link:', param_name + '->' + callback_node_name + '.str_in1')
+              print('\tadd_link:', callback_node_name + '.str_out->internal_process.' + param_name)
+              print('\tadd_link:', param_val + '->' + callback_node_name + '.str_in2')
 
 #          
 #          print('\tadd_link:', param_val + '->' + callback_node_name + '.str_in2')

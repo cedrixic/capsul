@@ -77,9 +77,11 @@ class BlockIteration(Pipeline):
 #        self.export_parameter('create_output', 'output')
         self.add_callback('create_offsets', CreateOffsets)
         self.add_link('create_offsets.offsets->iterative_byte_copy.offset')
+        print('\nExport creat_offset as input')
         self.export_parameter('create_offsets', 'input')
         self.add_link('input->iterative_byte_copy.input')
         self.add_link('input->create_output.input')
+        print('\nExport create_output as output')
         self.export_parameter('create_output', 'output')
         self.add_link('iterative_byte_copy.output->output')
 

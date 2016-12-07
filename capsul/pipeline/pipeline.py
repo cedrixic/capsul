@@ -33,7 +33,7 @@ except ImportError:
 
 # Capsul import
 from capsul.process.process import Process, NipypeProcess
-from capsul.process.traits_utils import is_trait_output
+from capsul.process.traits_utils import is_trait_output, is_trait_input
 from .topological_sort import GraphNode
 from .topological_sort import Graph
 from .pipeline_nodes import Plug
@@ -277,12 +277,22 @@ class Pipeline(Process):
         # Add the trait
         super(Pipeline, self).add_trait(name, trait)
         self.get(name)
-
+        print('inside Pipeline : ', str(self.get(name)))
+        print('\t->adding trait: ', str(name))
         # If we insert a user trait, create the associated plug
         if getattr(self, 'pipeline_node', False) and self.is_user_trait(trait):
-            output = bool(trait.output)
+            output = bool(is_trait_output(trait))
+            input = bool(is_trait_input(trait))
+#            output = bool(trait.output)
+#            input = bool(trait.input)
             optional = bool(trait.optional)
-            plug = Plug(output=output, optional=optional)
+            print('trait.output=',str(trait.output),
+                  ', trait.input=',str(trait.input),
+                  ', trait.optional=',str(trait.optional))
+            plug = Plug(output=output, input=input, optional=optional)
+            print('plug.output=',str(plug.output),
+                  ', plug.input=',str(plug.input),
+                  ', plug.optional=',str(plug.optional))
             self.pipeline_node.plugs[name] = plug
             plug.on_trait_change(self.update_nodes_and_plugs_activation,
                                  'enabled')
@@ -926,6 +936,9 @@ class Pipeline(Process):
         # Change the trait optional property
         if is_optional is not None:
             trait.optional = bool(is_optional)
+
+        # Set the trait input property
+        trait.input = bool(is_trait_input(trait))
 
         # Now add the parameter to the pipeline
         self.add_trait(pipeline_parameter, trait)

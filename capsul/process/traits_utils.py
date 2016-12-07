@@ -35,7 +35,7 @@ def is_trait_input(trait):
     if trait.output and not bool(trait.input) :
     	return False
     else:
-        return True
+      return True
 
 
 def is_trait_output(trait):

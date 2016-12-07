@@ -134,10 +134,12 @@ class Node(Controller):
         # True for an output
         parameters = list(zip(inputs, [False, ] * len(inputs)))
         parameters.extend(list(zip(outputs, [True, ] * len(outputs))))
+#        print('Node name : ', str(self.name))
         for parameter, parameter_type in parameters:
             # check if parameter is a dictionary as specified in the
             # docstring
             if isinstance(parameter, dict):
+#                print('parameter : ', str(parameter), ' - parameter_type : ', parameter_type)
                 # check if parameter contains a name item
                 # as specified in the docstring
                 if "name" not in parameter:
