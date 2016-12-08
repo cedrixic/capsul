@@ -77,6 +77,28 @@ class Plug(Controller):
         # The has_default value flag can be set by setting a value for a
         # parameter in Pipeline.add_process
         self.has_default_value = False
+        
+  
+    def declare_plug_inout(self, trait_name):
+        """ Add an automatic mechanism to set a trait as in/out
+
+        Parameters
+        ----------
+        trait_name: str (mandatory)
+            the name of the trait (has to be unique)
+
+        Examples
+        --------
+        >>> node.declare_inout('trait1')
+
+        will change the trait parameters input and output both to True
+
+        See Also
+        --------
+        /
+        """
+        self.trait(trait_name).input = True
+        self.trait(trait_name).output = True
 
 
 class Node(Controller):
@@ -367,6 +389,27 @@ class Node(Controller):
             the trait named trait_name
         """
         return self.trait(trait_name)
+  
+    def declare_node_inout(self, trait_name):
+        """ Add an automatic mechanism to set a trait as in/out
+
+        Parameters
+        ----------
+        trait_name: str (mandatory)
+            the name of the trait (has to be unique)
+
+        Examples
+        --------
+        >>> node.declare_inout('trait1')
+
+        will change the trait parameters input and output both to True
+
+        See Also
+        --------
+        /
+        """
+        self.trait(trait_name).input = True
+        self.trait(trait_name).output = True
 
 
 class ProcessNode(Node):

@@ -568,33 +568,6 @@ class Pipeline(Process):
 
         self._set_subprocess_context_name(node, name)
 
-  
-    def declare_inout(self, name, parameter):
-        """ Add an automatic mechanism to have in/out parameters
-
-        Parameters
-        ----------
-        name: str (mandatory)
-            the name of the node (has to be unique)
-        parameter: str (mandatory)
-            the name of the parameter to be changed (has to be unique)
-
-        Examples
-        --------
-        >>> pipeline.declare_inout('node_name', 'param1')
-
-        will change the parameter type to both input and output
-
-        See Also
-        --------
-        capsul.pipeline.pipeline_nodes.CallbackNode
-        """
-        if not name in self.nodes :
-          raise ValueError("Pipeline does not contain node {0}".format(name))
-        node = self.nodes[name]
-        node.user_traits
-        
-        
         
     
   

@@ -184,6 +184,29 @@ class Process(six.with_metaclass(ProcessMeta, Controller)):
             trait.optional = bool(trait.optional)
         super(Process, self).add_trait(name, trait)
         
+  
+    def declare_trait_inout(self, trait_name):
+        """ Add an automatic mechanism to set a trait as in/out
+
+        Parameters
+        ----------
+        trait_name: str (mandatory)
+            the name of the trait (has to be unique)
+
+        Examples
+        --------
+        >>> process.declare_inout('trait1')
+
+        will change the trait parameters input and output both to True
+
+        See Also
+        --------
+        /
+        """
+        self.traits()[trait_name].input = True
+        self.traits()[trait_name].output = True
+        
+        
     def __call__(self, **kwargs):
         """ Method to execute the Process.
 
