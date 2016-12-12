@@ -38,7 +38,7 @@ from soma.controller.trait_utils import get_trait_desc
 
 # Capsul import
 from capsul.utils.version_utils import get_tool_version
-from capsul.process.traits_utils import is_trait_output
+from capsul.process.traits_utils import is_trait_output, is_trait_input
 
 if sys.version_info[0] <= 3:
     unicode = str
@@ -581,11 +581,13 @@ class Process(six.with_metaclass(ProcessMeta, Controller)):
         outputs: dict
             a dictionary with all the input trait names and values.
         """
-        output = {}
+        print("in get_inputs")
+        input = {}
         for trait_name, trait in six.iteritems(self.user_traits()):
-            if not is_trait_output(trait):
-                output[trait_name] = getattr(self, trait_name)
-        return output
+            if is_trait_input(trait):
+#            if not is_trait_output(trait):
+                input[trait_name] = getattr(self, trait_name)
+        return input
 
     def get_outputs(self):
         """ Method to access the process outputs.
@@ -595,9 +597,11 @@ class Process(six.with_metaclass(ProcessMeta, Controller)):
         outputs: dict
             a dictionary with all the output trait names and values.
         """
+        print("in get_outputs")
         output = {}
         for trait_name, trait in six.iteritems(self.traits(output=True)):
-            output[trait_name] = getattr(self, trait_name)
+            if is_trait_output(trait):
+              output[trait_name] = getattr(self, trait_name)
         return output
 
     def get_help(self, returnhelp=False):

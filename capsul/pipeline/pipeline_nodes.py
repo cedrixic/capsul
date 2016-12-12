@@ -35,7 +35,7 @@ from soma.controller import Controller
 from soma.sorted_dictionary import SortedDictionary
 from soma.utils.functiontools import SomaPartial
 from soma.utils.weak_proxy import weak_proxy, get_ref
-from capsul.process.traits_utils import is_trait_output
+from capsul.process.traits_utils import is_trait_output, is_trait_input
 
 
 class Plug(Controller):
@@ -61,6 +61,7 @@ class Plug(Controller):
     enabled = Bool(default_value=True)
     activated = Bool(default_value=False)
     output = Bool(default_value=False)
+    input = Bool(default_value=True)
     optional = Bool(default_value=False)
 
     def __init__(self, **kwargs):
@@ -448,14 +449,30 @@ class ProcessNode(Node):
         for parameter, trait in six.iteritems(self.process.user_traits()):
             if parameter in ('nodes_activation', 'selection_changed'):
                 continue
-            if is_trait_output(trait):
-                outputs.append(dict(name=parameter,
+#            if is_trait_output(trait):
+#                outputs.append(dict(name=parameter,
+#                                    optional=bool(trait.optional),
+#                                    output=True))
+#            else:
+#                inputs.append(dict(name=parameter,
+#                                   optional=bool(trait.optional or
+#                                                 parameter in kwargs)))
+            dict_to_append = {}
+            if is_trait_output(trait) and is_trait_input(trait):
+                dict_to_append = dict(name=parameter,
                                     optional=bool(trait.optional),
-                                    output=True))
-            else:
-                inputs.append(dict(name=parameter,
-                                   optional=bool(trait.optional or
-                                                 parameter in kwargs)))
+                                    output=True,
+                                    input=True)
+            else :
+              if is_trait_input(trait):
+                dict_to_append = dict(name=parameter,
+                                    optional=bool(trait.optional),
+                                    input=True)
+              else:
+                dict_to_append = dict(name=parameter,
+                                    optional=bool(trait.optional),
+                                    output=True)
+            inputs.append(dict_to_append)
         super(ProcessNode, self).__init__(pipeline, name, inputs, outputs)
 
     def set_callback_on_plug(self, plug_name, callback):

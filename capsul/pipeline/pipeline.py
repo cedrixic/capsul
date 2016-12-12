@@ -777,12 +777,15 @@ class Pipeline(Process):
          dest_plug) = self.parse_link(link)
 
         # Assure that pipeline plugs are not linked
-        if not is_trait_output(source_plug) and source_node is not self.pipeline_node:
-            raise ValueError("Cannot link from a pipeline input "
-                             "plug: {0}".format(link))
-        if is_trait_output(dest_plug) and dest_node is not self.pipeline_node:
-            raise ValueError("Cannot link to a pipeline output "
-                             "plug: {0}".format(link))
+##################################################################
+#  TEST!!!! A remettre
+##################################################################
+#        if not is_trait_output(source_plug) and source_node is not self.pipeline_node:
+#            raise ValueError("Cannot link from a pipeline input "
+#                             "plug: {0}".format(link))
+#        if is_trait_output(dest_plug) and dest_node is not self.pipeline_node:
+#            raise ValueError("Cannot link to a pipeline output "
+#                             "plug: {0}".format(link))
 
         # Propagate the plug value from source to destination
         value = source_node.get_plug_value(source_plug_name)
@@ -893,12 +896,15 @@ class Pipeline(Process):
             pipeline_parameter = plug_name
 
         # Check the the pipeline parameter name is not already used
-        if pipeline_parameter in self.user_traits():
-            raise ValueError(
-                "Parameter '{0}' of node '{1}' cannot be exported to pipeline "
-                "parameter '{2}'".format(
-                    plug_name, node_name or 'pipeline_node',
-                    pipeline_parameter))
+##################################################################
+#  TEST!!!! A remettre
+##################################################################
+#        if pipeline_parameter in self.user_traits():
+#            raise ValueError(
+#                "Parameter '{0}' of node '{1}' cannot be exported to pipeline "
+#                "parameter '{2}'".format(
+#                    plug_name, node_name or 'pipeline_node',
+#                    pipeline_parameter))
 
         # Set user enabled parameter only if specified
         # Important because this property is automatically set during

@@ -95,8 +95,8 @@ if __name__ == "__main__":
         from capsul.qt_gui.widgets import PipelineDevelopperView
 
         pipeline = BlockIteration()
-        view1 = PipelineDevelopperView(pipeline, show_sub_pipelines=True,
-                                       allow_open_controller=True)
-        view1.show()
-        app.exec_()
-        del view1
+#        view1 = PipelineDevelopperView(pipeline, show_sub_pipelines=True,
+#                                       allow_open_controller=True)
+#        view1.show()
+#        app.exec_()
+#        del view1
