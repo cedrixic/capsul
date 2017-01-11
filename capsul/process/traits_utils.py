@@ -54,15 +54,18 @@ def is_trait_output(trait):
       False if trait's parameter is defined as False, or is not defined (None).
       Possible cases : 
       	.input	.output		result
-      	 True	 True		 True
-      	 True	 False		 False
-      	 True	 None		 False
-      	 False	 True		 True
-      	 False   False		 False
-      	 False	 None		 False
-      	 None	 True		 True
-      	 None    False		 False
-      	 None 	 None		 False
+      	 True	       True		 True
+      	 True	       False		 False
+      	 True	       None		 False
+      	 False	 True		       True
+      	 False       False		 False
+      	 False	 None		      False (?)
+      	 None	       True		 True
+      	 None       False		 False
+      	 None 	 None		      False (?)
     """
-    
+#    print('is trait output ?', str(trait.output))      
+#    if trait.input is False and trait.output is None:
+#      print('trait is output :', str(trait.output))      
+#      return True
     return bool(trait.output)

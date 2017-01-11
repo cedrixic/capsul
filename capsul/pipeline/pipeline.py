@@ -249,15 +249,34 @@ class Pipeline(Process):
         include_optional: bool (optional)
             If True (the default), optional plugs are not exported
         """
+#        print('LOOPS THROUGH NODES:')
+#        for node_name, node in six.iteritems(self.nodes):
+#            print('\t', str(node_name))
         for node_name, node in six.iteritems(self.nodes):
             if node_name == "":
                     continue
+#            print('\nNode name :', str(node_name))
+#            print('LOOPS THROUGH NODE PLUGS:')
+#            for parameter_name, plug in six.iteritems(node.plugs):
+#                print('\t', str(parameter_name))
             for parameter_name, plug in six.iteritems(node.plugs):
                 if parameter_name in ("nodes_activation", "selection_changed"):
                     continue
+#                print(str(parameter_name)+'.input=', str(plug.input))
+#                print(str(parameter_name)+'.output=', str(plug.output))
+#                inp=is_trait_input(plug)
+#                outp=is_trait_output(plug)
+#                st='is '
+#                if inp:
+#                  st='input'
+#                if outp:
+#                  st='output'
+#                print(str(parameter_name), st,
+#                      'and links to', plug.links_to,
+#                      'and from', plug.links_from)
                 if (((node_name, parameter_name) not in self.do_not_export and
                     ((is_trait_output(plug) and not plug.links_to) or
-                     (not is_trait_output(plug) and not plug.links_from)) and
+                     (is_trait_input(plug) and not plug.links_from)) and
                     (include_optional or not
                      self.nodes[node_name].get_trait(
                         parameter_name).optional))):
@@ -277,8 +296,8 @@ class Pipeline(Process):
         # Add the trait
         super(Pipeline, self).add_trait(name, trait)
         self.get(name)
-        print('inside Pipeline : ', str(self.get(name)))
-        print('\t->adding trait: ', str(name))
+#        print('inside Pipeline : ', str(self.get(name)))
+#        print('\t->adding trait: ', str(name))
         # If we insert a user trait, create the associated plug
         if getattr(self, 'pipeline_node', False) and self.is_user_trait(trait):
             output = bool(is_trait_output(trait))
@@ -286,13 +305,13 @@ class Pipeline(Process):
 #            output = bool(trait.output)
 #            input = bool(trait.input)
             optional = bool(trait.optional)
-            print('trait.output=',str(trait.output),
-                  ', trait.input=',str(trait.input),
-                  ', trait.optional=',str(trait.optional))
+#            print('trait.output=',str(trait.output),
+#                  ', trait.input=',str(trait.input),
+#                  ', trait.optional=',str(trait.optional))
             plug = Plug(output=output, input=input, optional=optional)
-            print('plug.output=',str(plug.output),
-                  ', plug.input=',str(plug.input),
-                  ', plug.optional=',str(plug.optional))
+#            print('plug.output=',str(plug.output),
+#                  ', plug.input=',str(plug.input),
+#                  ', plug.optional=',str(plug.optional))
             self.pipeline_node.plugs[name] = plug
             plug.on_trait_change(self.update_nodes_and_plugs_activation,
                                  'enabled')
@@ -395,6 +414,14 @@ class Pipeline(Process):
         # Create a process node
         process = get_process_instance(process, study_config=self.study_config,
                                        **kwargs)
+#        print('Process', str(name))#, ':', str(process.traits()))
+#        print('\tProcess traits before adding to pipeline')
+#        for p in process.user_traits():
+#          if process.is_user_traits(p): 
+#            print('\t\ttrait:', str(p), 'is input:', str(process.traits()[p].input),
+#                'is output:', str(process.traits()[p].output))
+#            print('\t\ttrait:', str(p), 'is input:', str(is_trait_input(process.traits()[p])),
+#                'is output:', str(is_trait_output(process.traits()[p])))
         # set full contextual name on process instance
         self._set_subprocess_context_name(process, name)
 
@@ -419,15 +446,23 @@ class Pipeline(Process):
             node = ProcessNode(self, name, process)
         self.nodes[name] = node
 
+
+#        print('\tProcess traits during adding to pipeline')
+#        for p in node.plugs:
+##          if process.is_user_traits(p): 
+#            print('\t\ttrait:', str(p), 'is input:', str(is_trait_input(node.plugs[p])),
+#                'is output:', str(is_trait_output(node.plugs[p])))
+                
         # If a default value is given to a parameter, change the corresponding
         # plug so that it gets activated even if not linked
         for parameter_name in kwargs:
             if process.trait(parameter_name):
                 node.plugs[parameter_name].has_default_value = True
                 make_optional.add(parameter_name)
-
+                
         # Change plug default properties
         for parameter_name in node.plugs:
+#            print('Default value to parameter', str(parameter_name))
             # Do not export plug
             if (parameter_name in do_not_export or
                     parameter_name in make_optional):
@@ -436,6 +471,16 @@ class Pipeline(Process):
             # Optional plug
             if parameter_name in make_optional:
                 node.plugs[parameter_name].optional = True
+                
+#            if name is 'constant':
+#              print('PARAMETERS:', str(parameter_name))
+#        if name is 'constant':
+#        print('\tProcess traits after adding to pipeline')
+#        for p in node.plugs:
+#          print('\t\tplug:', str(p), 'is input:', str(node.plugs[p].input),
+#                'is output:', str(node.plugs[p].output))
+#          print('\t\ttrait:', str(p), 'is input:', str(is_trait_input(node.plugs[p])),
+#                'is output:', str(is_trait_output(node.plugs[p])))
 
         # Create a trait to control the node activation (enable property)
         self.nodes_activation.add_trait(name, Bool)
@@ -775,6 +820,19 @@ class Pipeline(Process):
         (source_node_name, source_plug_name, source_node,
          source_plug, dest_node_name, dest_plug_name, dest_node,
          dest_plug) = self.parse_link(link)
+#        print('Link to add :'+
+#              '\n  Source :'+
+#              '\n    source_node_name : '+str(source_node_name)+
+#              '\n    source_plug_name : '+str(source_plug_name)+
+#              '\n    source_node : '+str(source_node)+
+#              '\n    source_plug : '+str(source_plug)+
+#              '\n  Dest :'+
+#              '\n    dest_node_name : '+str(dest_node_name)+
+#              '\n    dest_plug_name : '+str(dest_plug_name)+
+#              '\n    dest_node : '+str(dest_node)+
+#              '\n    dest_plug : '+str(dest_plug))
+#        print(str(source_node_name)+'.'+str(source_plug_name) + ' links to ' +
+#              str(source_node.plugs.get(source_plug_name, None).links_to) )
 
         # Assure that pipeline plugs are not linked
 ##################################################################
@@ -786,6 +844,7 @@ class Pipeline(Process):
 #        if is_trait_output(dest_plug) and dest_node is not self.pipeline_node:
 #            raise ValueError("Cannot link to a pipeline output "
 #                             "plug: {0}".format(link))
+##################################################################
 
         # Propagate the plug value from source to destination
         value = source_node.get_plug_value(source_plug_name)
@@ -801,10 +860,13 @@ class Pipeline(Process):
         # Set a connected_output property
         if (isinstance(dest_node, ProcessNode) and
                 isinstance(source_node, ProcessNode)):
+#            print('ADD_LINK INSIDE IF')
             source_trait = source_node.process.trait(source_plug_name)
             dest_trait = dest_node.process.trait(dest_plug_name)
-            if is_trait_output(source_trait) and not is_trait_output(dest_trait):
-                dest_trait.connected_output = True
+#            if is_trait_output(source_trait) and not is_trait_output(dest_trait):
+#                dest_trait.connected_output = True
+            dest_trait.connected_output = True
+#            print('dest_trait.connected_output = ' + str(dest_trait.connected_output))
 
         # Propagate the description in case of destination switch node
         if isinstance(dest_node, Switch):
@@ -815,11 +877,17 @@ class Pipeline(Process):
                                       getattr(dest_node, "switch"))
 
         # Observer
+#        print('source_node before connect : ' + str(source_node.plugs))
         source_node.connect(source_plug_name, dest_node, dest_plug_name)
+#        print(str(source_node_name)+'.'+str(source_plug_name) + ' links to ' +
+#              str(source_node.plugs.get(source_plug_name, None).links_to) )
+#        print('source_node after connect : ' + str(source_node.plugs))
         dest_node.connect(dest_plug_name, source_node, source_plug_name)
 
         # Refresh pipeline activation
         self.update_nodes_and_plugs_activation()
+#        print(str(source_node_name)+'.'+str(source_plug_name) + ' links to ' +
+#              str(source_node.plugs.get(source_plug_name, None).links_to) )
 
     def remove_link(self, link):
         """ Remove a link between pipeline nodes
@@ -890,21 +958,18 @@ class Pipeline(Process):
         if trait is None:
             raise ValueError("Node {0} ({1}) has no parameter "
                              "{2}".format(node_name, node.name, plug_name))
-
+#        print('pipelineparameter=', str(pipeline_parameter))
         # If a tuned name is not specified, used the plug name
         if not pipeline_parameter:
             pipeline_parameter = plug_name
 
         # Check the the pipeline parameter name is not already used
-##################################################################
-#  TEST!!!! A remettre
-##################################################################
-#        if pipeline_parameter in self.user_traits():
-#            raise ValueError(
-#                "Parameter '{0}' of node '{1}' cannot be exported to pipeline "
-#                "parameter '{2}'".format(
-#                    plug_name, node_name or 'pipeline_node',
-#                    pipeline_parameter))
+        if pipeline_parameter in self.user_traits():
+            raise ValueError(
+                "Parameter '{0}' of node '{1}' cannot be exported to pipeline "
+                "parameter '{2}'".format(
+                    plug_name, node_name or 'pipeline_node',
+                    pipeline_parameter))
 
         # Set user enabled parameter only if specified
         # Important because this property is automatically set during
@@ -917,7 +982,7 @@ class Pipeline(Process):
             trait.optional = bool(is_optional)
 
         # Set the trait input property
-        trait.input = bool(is_trait_input(trait))
+        trait.input = is_trait_input(trait)
 
         # Now add the parameter to the pipeline
         self.add_trait(pipeline_parameter, trait)
@@ -930,10 +995,13 @@ class Pipeline(Process):
         if is_trait_output(trait):
             link_desc = "{0}.{1}->{2}".format(
                 node_name, plug_name, pipeline_parameter)
+#            print('------link_desc =', str(link_desc))
             self.add_link(link_desc,  weak_link)
-        else:
+#        else:
+        if is_trait_input(trait):
             link_desc = "{0}->{1}.{2}".format(
                 pipeline_parameter, node_name, plug_name)
+#            print('------link_desc =', str(link_desc))
             self.add_link(link_desc, weak_link)
 
     def _set_node_enabled(self, node_name, is_enabled):
@@ -1068,18 +1136,25 @@ class Pipeline(Process):
                 plug_activated = weak_activation
             return plug_activated
 
+#        if node.name is '' :
+#           nodeName = 'Pipeline'
+#        else :
+#           nodeName = str(node.name)
         plugs_deactivated = []
         # If node has already been  deactivated there is nothing to do
         if node.activated:
+#            print('!!!!Node', str(nodeName), 'is activated')
             deactivate_node = bool([plug for plug in node.plugs.itervalues()
                                     if is_trait_output(plug)])
             for plug_name, plug in six.iteritems(node.plugs):
+#                print('==== pipeline->check_plug_activation, node:', str(nodeName), 
+#                'plug:', plug_name, 'activated:', plug.activated)
                 # Check all activated plugs
                 if plug.activated:
                     # A plug with a default value is always activated
                     if plug.has_default_value:
                         continue
-                    output = plug.output
+                    output = is_trait_output(plug)
                     if (isinstance(node, PipelineNode) and
                        node is not self.pipeline_node and is_trait_output(plug)):
                         plug_activated = (
@@ -1091,9 +1166,15 @@ class Pipeline(Process):
                         if output:
                             plug_activated = check_plug_activation(
                                 plug, plug.links_to)
+#                            print('========plug is input, activated =', 
+#                                  str(plug_activated),
+#                                  str(plug.links_to))
                         else:
                             plug_activated = check_plug_activation(
                                 plug, plug.links_from)
+#                            print('========plug is output, activated =', 
+#                                  str(plug_activated),
+#                                  str(plug.links_from))
 
                     # Plug must be deactivated, record it in result and check
                     # if this deactivation also deactivate the node
@@ -1106,12 +1187,18 @@ class Pipeline(Process):
                             break
                 if is_trait_output(plug) and plug.activated:
                     deactivate_node = False
+#                    print('========deactivate_node=false')
+#            print('Node', str(nodeName), 'activated :', str(node.activated))
             if deactivate_node:
+#                print('________Deactivates node', str(nodeName))
                 node.activated = False
                 for plug_name, plug in six.iteritems(node.plugs):
+#                    print('________Plug', str(plug_name))
                     if plug.activated:
+#                        print('____________Deactivates plug', str(plug_name))
                         plug.activated = False
                         plugs_deactivated.append((plug_name, plug))
+#        print('For', str(nodeName), 'plugs_deactivated :', str(plugs_deactivated))
         return plugs_deactivated
 
     def delay_update_nodes_and_plugs_activation(self):

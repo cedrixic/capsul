@@ -1015,10 +1015,10 @@ class PipelineScene(QtGui.QGraphicsScene):
         dest_gnode = self.gnodes.get(dest_gnode_name)
         if dest_gnode is not None:
             if dest_param in dest_gnode.in_plugs:
-                print("\t\t\tsource_gnode_name ", source_gnode_name)
-                print("\t\t\tsource_param ", source_param)
-                print("\t\t\tsource_gnode.out_plugs ", source_gnode.out_plugs)
-                print("\t\t\tsource_gnode.out_plugs[source_param] ", source_gnode.out_plugs[source_param])
+#                print("\t\t\tsource_gnode_name ", source_gnode_name)
+#                print("\t\t\tsource_param ", source_param)
+#                print("\t\t\tsource_gnode.out_plugs ", source_gnode.out_plugs)
+#                print("\t\t\tsource_gnode.out_plugs[source_param] ", source_gnode.out_plugs[source_param])
                 glink = Link(
                     source_gnode.mapToScene(
                         source_gnode.out_plugs[source_param].get_plug_point()),
@@ -1076,8 +1076,8 @@ class PipelineScene(QtGui.QGraphicsScene):
             if is_trait_input(plug):
 #            else:
                 pipeline_inputs[name] = plug
-        print('DICTIONARIES : Input = ', str(pipeline_inputs))
-        print('DICTIONARIES : Output = ', str(pipeline_outputs))
+#        print('DICTIONARIES : Input = ', str(pipeline_inputs))
+#        print('DICTIONARIES : Output = ', str(pipeline_outputs))
         if pipeline_inputs:
             self._add_node(
                 'inputs', NodeGWidget('inputs', pipeline_inputs, pipeline,
@@ -1114,22 +1114,22 @@ class PipelineScene(QtGui.QGraphicsScene):
 #                    process=pipeline,
 #                    colored_parameters=self.colored_parameters,
 #                    logical_view=self.logical_view))
-        print('INPUTS :', str(pipeline_inputs) )
-        print('OUTPUTS :', str(pipeline_outputs) )
+#        print('INPUTS :', str(pipeline_inputs) )
+#        print('OUTPUTS :', str(pipeline_outputs) )
         for source_node_name, source_node in six.iteritems(pipeline.nodes):
-            print('SOURCE_NODE_NAME :', str(source_node_name) )
+#            print('SOURCE_NODE_NAME :', str(source_node_name) )
             for source_parameter, source_plug \
                     in six.iteritems(source_node.plugs):
-                print('\tsource_parameter :', str(source_parameter) )
-                print('\tsource_plug :', str(source_plug) )
-                print('\tsource_plug.links_to :', str(source_plug.links_to) )
+#                print('\tsource_parameter :', str(source_parameter) )
+#                print('\tsource_plug :', str(source_plug) )
+#                print('\tsource_plug.links_to :', str(source_plug.links_to) )
                 for (dest_node_name, dest_parameter, dest_node, dest_plug,
                      weak_link) in source_plug.links_to:
-                    print('\t\tdest_node_name :', str(dest_node_name) )
-                    print('\t\tdest_parameter :', str(dest_parameter) )
-                    print('\t\tdest_node :', str(dest_node) )
-                    print('\t\tdest_plug :', str(dest_plug) )
-                    print('\t\tweak_link :', str(weak_link) )
+#                    print('\t\tdest_node_name :', str(dest_node_name) )
+#                    print('\t\tdest_parameter :', str(dest_parameter) )
+#                    print('\t\tdest_node :', str(dest_node) )
+#                    print('\t\tdest_plug :', str(dest_plug) )
+#                    print('\t\tweak_link :', str(weak_link) )
                     if dest_node is pipeline.nodes.get(dest_node_name):
                         self.add_link(
                             (source_node_name, source_parameter),

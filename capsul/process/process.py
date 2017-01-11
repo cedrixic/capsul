@@ -177,11 +177,16 @@ class Process(six.with_metaclass(ProcessMeta, Controller)):
         boolean value before calling parent class add_trait.
         """
         if trait._metadata is not None:
+#            print('PROCESS ADD TRAIT 1', str(name), '.output=', str(trait.output))
             trait._metadata['output'] = is_trait_output(trait)
             trait._metadata['optional'] = bool(trait.optional)
         else:
+#            print('PROCESS ADD TRAIT 2', str(name), '.output=', str(trait.output))
             trait.output = is_trait_output(trait)
             trait.optional = bool(trait.optional)
+        trait.input = is_trait_input(trait)
+#        print('TRAIT SET UP', str(name), '.output=', str(is_trait_output(trait)))
+#        print('TRAIT SET UP', str(name), '.input=', str(is_trait_input(trait)))
         super(Process, self).add_trait(name, trait)
         
   

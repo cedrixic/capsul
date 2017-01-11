@@ -457,22 +457,33 @@ class ProcessNode(Node):
 #                inputs.append(dict(name=parameter,
 #                                   optional=bool(trait.optional or
 #                                                 parameter in kwargs)))
-            dict_to_append = {}
+#            dict_to_append = {}
+#            print('node', str(name), 'parameter', str(parameter))
             if is_trait_output(trait) and is_trait_input(trait):
-                dict_to_append = dict(name=parameter,
+#                print('Process_node both in/out')
+                inputs.append(dict(name=parameter,
                                     optional=bool(trait.optional),
                                     output=True,
-                                    input=True)
+                                    input=True))
+                outputs.append(dict(name=parameter,
+                                    optional=bool(trait.optional),
+                                    output=True,
+                                    input=True))
             else :
               if is_trait_input(trait):
-                dict_to_append = dict(name=parameter,
+#                print('Process_node input')
+                inputs.append(dict(name=parameter,
                                     optional=bool(trait.optional),
-                                    input=True)
+                                    ioutput=False,
+                                    input=True))
               else:
-                dict_to_append = dict(name=parameter,
+#                print('Process_node else')
+                outputs.append(dict(name=parameter,
                                     optional=bool(trait.optional),
-                                    output=True)
-            inputs.append(dict_to_append)
+                                    output=True,
+                                    input=False))
+#            inputs.append(dict_to_append)
+#            outputs.append(dict_to_append)
         super(ProcessNode, self).__init__(pipeline, name, inputs, outputs)
 
     def set_callback_on_plug(self, plug_name, callback):
