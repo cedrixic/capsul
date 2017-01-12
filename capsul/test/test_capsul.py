@@ -71,7 +71,9 @@ def run_all_tests():
     tests = load_pilots(module_path, module_path)
     has_warnings = False
     is_valid = True
+    print('tests', str(tests))
     for module, ltest in tests.items():
+        print('Loading module', str(module))
         if isinstance(ltest, Warning):
             print('=' * 60)
             print("WARNING when loading module {0}: {1}".format(module, ltest))
@@ -101,6 +103,7 @@ def is_valid_module():
 
 
 if __name__ == "__main__":
+    print('test1')
     is_valid = is_valid_module()
     if not is_valid:
         sys.exit(1)

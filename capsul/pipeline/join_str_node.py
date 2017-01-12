@@ -77,8 +77,8 @@ class JoinStrNode(Pipeline):
         #self.process = process
         self.add_process('internal_process', process)
                 
-        verbose = False
-#        verbose = True
+#        verbose = False
+        verbose = True
         
         i = 0
         t = False

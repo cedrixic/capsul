@@ -216,7 +216,8 @@ class TestSwitchPipeline(unittest.TestCase):
         self.assertEqual(self.pipeline.compare_to_state(state),[])
 
     def test_switch_value(self):
-        state_one = self.load_state('test_switch_subpipeline_one')    
+        state_one = self.load_state('test_switch_subpipeline_one')
+#        print('STATE_ONE:', str(state_one))
         state_two = self.load_state('test_switch_subpipeline_two')
         self.pipeline.which_way = 'two'
         self.assertEqual(self.pipeline.compare_to_state(state_two),[])

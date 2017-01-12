@@ -12,7 +12,7 @@ from traits.api import Float, File, Int, List, Str, Undefined
 class ByteCopy(Process):
 
     input = File()
-    output = File(output=True)
+    output = File(input=True, output=True)
         
     def _run_process(self):
         filename, offset = self.input.split('?')
@@ -72,7 +72,8 @@ class BlockIteration(Pipeline):
         #self.declare_inout_parameter('iterative_byte_copy.output')
 #        self.export_parameter('iterative_byte_copy','output')
         
-        self.add_process('create_output', 'capsul.pipeline.test.test_uri.FileCreation')
+        self.add_process('create_output', 'FileCreation')
+#        self.add_process('create_output', 'capsul.pipeline.test.test_uri.FileCreation')
 #        self.export_parameter('create_output', 'input')
 #        self.export_parameter('create_output', 'output')
         self.add_callback('create_offsets', CreateOffsets)
@@ -85,9 +86,44 @@ class BlockIteration(Pipeline):
         #a remettre - pour passer ctest en cours de dev
 #        self.export_parameter('create_output', 'output')
 #        self.add_link('iterative_byte_copy.output->output')
+        
+
+class TestPipeline(unittest.TestCase):
+
+    def setUp(self):
+#        print('\n')
+        self.pipeline = BlockIteration()
+
+    def test_uri(self):
+        print('Nodes dic size : '+ str(len(self.pipeline.nodes)) )
+        for nodename, nodeinst in self.pipeline.nodes.items():
+          if nodename is '' : 
+              nodename = 'Pipeline'
+          print('NODE '+str(nodename) +' :' )
+          for plugname, pluginst in nodeinst.plugs.items():
+#            print(str(nodeinst.plugs.get(plugname, None).links_to))
+            for destnodename, destplugname, destnodeinst, destpluginst, active \
+                in nodeinst.plugs.get(plugname, None).links_to:
+              if destnodename is '' : 
+                destnodename = 'Pipeline'
+              print(str(nodename) + '.'+str(plugname)+' links to ' +
+                    str(destnodename) + '.'+str(destplugname) )
+        graph = self.pipeline.workflow_graph()
+        print("GRAPH : \n" + str(graph))
+        print("NODES : \n" + str(self.pipeline.nodes))
+        print("REPR : \n" + str(self.pipeline.workflow_repr))
+        print("LIST : \n" + str(self.pipeline.workflow_list))
 
         
+def test():
+    """ Function to execute unitest
+    """
+    suite = unittest.TestLoader().loadTestsFromTestCase(TestPipeline)
+    runtime = unittest.TextTestRunner(verbosity=2).run(suite)
+    return runtime.wasSuccessful()
+
 if __name__ == "__main__":
+    print("RETURNCODE: ", test())
 
     if 1:
         import sys

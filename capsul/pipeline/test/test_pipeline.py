@@ -8,6 +8,7 @@
 
 from __future__ import print_function
 import unittest
+import six
 from traits.api import File, Float
 from capsul.api import Process
 from capsul.api import Pipeline
@@ -36,37 +37,75 @@ class MyPipeline(Pipeline):
     """ Simple Pipeline to test the Switch Node
     """
     def pipeline_definition(self):
-
+        self._debug_activations = "/tmp/debug_activation.log"
         # Create processes
+#        print("NODES origin : \n" + str(self.nodes))
         self.add_process("constant",
             "capsul.pipeline.test.test_pipeline.DummyProcess",
             do_not_export=['input_image', 'other_input'],
             make_optional=['input_image', 'other_input'],)
+#        print("NODES ADD_PROCESS_1 : \n" + str(self.nodes))
         self.add_process("node1",
             "capsul.pipeline.test.test_pipeline.DummyProcess")
+#        print("NODES ADD_PROCESS_2 : \n" + str(self.nodes))
         self.add_process("node2",
             "capsul.pipeline.test.test_pipeline.DummyProcess")
+#        print("NODES ADD_PROCESS_3 : \n" + str(self.nodes))
 
         # Links
+#        print("ADD_LINK 1")
         self.add_link("node1.output_image->node2.input_image")
+#        print("ADD_LINK 2")
         self.add_link("node1.other_output->node2.other_input")
+#        print("ADD_LINK 3")
         self.add_link("constant.output_image->node2.input_image")
+#        print("ADD_LINK END")
 
         # Outputs
+#        print("EXPORT NODE 1 INPUT_IMAGE")
         self.export_parameter("node1", "input_image")
+#        print("EXPORT NODE 1 OTHER_INPUT")
         self.export_parameter("node1", "other_input")
+#        print("EXPORT NODE 2 OUTPUT_IMAGE")
         self.export_parameter("node2", "output_image")
+#        print("EXPORT NODE 2 OTHER_OUTPUT")
         self.export_parameter("node2", "other_output")
+#        print("EXPORTS END")
+        
+#        self.do_autoexport_nodes_parameters = False
 
 
 class TestPipeline(unittest.TestCase):
 
     def setUp(self):
+#        print('\n')
         self.pipeline = MyPipeline()
 
     def test_constant(self):
+      
+#        print("+++++++++++test_constant_starts")
         graph = self.pipeline.workflow_graph()
+#        print("+++++++++++orderes_list")
         ordered_list = graph.topological_sort()
+#        print("GRAPH : \n" + str(graph))
+#        print("ORDERED LIST : \n" + str(ordered_list))
+#        print("NODES : \n" + str(self.pipeline.nodes))
+#        print("REPR : \n" + self.pipeline.workflow_repr)
+#        print("LIST : \n" + str(self.pipeline.workflow_list))
+#        print('Nodes dic size : '+ str(len(self.pipeline.nodes)) )
+#        for nodename, nodeinst in self.pipeline.nodes.items():
+#          if nodename is '' : 
+#              nodename = 'Pipeline'
+#          print('NODE '+str(nodename) +' :' )
+#          for plugname, pluginst in nodeinst.plugs.items():
+##            print(str(nodeinst.plugs.get(plugname, None).links_to))
+#            for destnodename, destplugname, destnodeinst, destpluginst, active \
+#                in nodeinst.plugs.get(plugname, None).links_to:
+#              if destnodename is '' : 
+#                destnodename = 'Pipeline'
+#              print(str(nodename) + '.'+str(plugname)+' links to ' +
+#                    str(destnodename) + '.'+str(destplugname) )
+        
         self.pipeline.workflow_ordered_nodes()
         self.assertTrue(
             self.pipeline.workflow_repr in
@@ -97,12 +136,12 @@ if __name__ == "__main__":
         app = QtGui.QApplication(sys.argv)
         from capsul.qt_gui.widgets import PipelineDevelopperView
 
-<<<<<<< HEAD
-=======
+#<<<<<<< HEAD
+#=======
         app = QtGui.QApplication.instance()
         if not app:
             app = QtGui.QApplication(sys.argv)
->>>>>>> neurospin/master
+#>>>>>>> neurospin/master
         pipeline = MyPipeline()
         setattr(pipeline.nodes_activation, "node2", False)
         view1 = PipelineDevelopperView(pipeline)
