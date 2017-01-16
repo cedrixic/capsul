@@ -28,7 +28,7 @@ param1 value + param2 value to param1_out and param3 value + param2 value to par
 
 TODO :
 
-- output must be delared as input/output to propagate value
+- output must be declared as input/output to propagate value
 
 
 '''
@@ -158,7 +158,8 @@ class JoinStrNode(Pipeline):
             
 #          else:
           if input:
-            self.add_callback(callback_node_name, JoinStrCallbackNode)
+            if not output:
+              self.add_callback(callback_node_name, JoinStrCallbackNode)
             self.add_link(param_name + '->' + callback_node_name + '.str_in1')
             self.add_link( callback_node_name + '.str_out->internal_process.' + param_name)
             self.add_link(param_val + '->' + callback_node_name + '.str_in2')
