@@ -69,3 +69,13 @@ def is_trait_output(trait):
 #      print('trait is output :', str(trait.output))      
 #      return True
     return bool(trait.output)
+
+
+def is_trait_both(trait):
+  
+    """ Check if the trait is defined both as input and output
+    """
+    
+    return bool( is_trait_output(trait) and is_trait_input(trait) )
+    
+    

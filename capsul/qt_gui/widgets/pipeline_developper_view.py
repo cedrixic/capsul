@@ -30,7 +30,8 @@ from capsul.api import Pipeline
 from capsul.api import Process
 from capsul.api import get_process_instance
 from capsul.pipeline.process_iteration import ProcessIteration
-from capsul.process.traits_utils import is_trait_output, is_trait_input
+from capsul.process.traits_utils \
+    import is_trait_output, is_trait_input, is_trait_both
 from capsul.qt_gui.widgets.pipeline_file_warning_widget \
     import PipelineFileWarningWidget
 import capsul.pipeline.xml as capsulxml
@@ -345,11 +346,27 @@ class NodeGWidget(QtGui.QGraphicsItem):
             selections = self.pipeline.get_processes_selections()
         else:
             selections = []
-
+        print('BuildRegularViewPlugs in_param for', str(self.name))
+#        print('self.parameters :', str(self.parameters))
         for in_param, pipeline_plug in six.iteritems(self.parameters):
-            output = (not is_trait_output(pipeline_plug) if self.name in (
-                'inputs', 'outputs') else is_trait_output(pipeline_plug))
+          
+####         original
+#            output = (not is_trait_output(pipeline_plug) if self.name in (
+#                'inputs', 'outputs') else is_trait_output(pipeline_plug))
+#            if output:
+#                continue
+####
+        
+            output = (not is_trait_output(pipeline_plug) \
+                      if self.name in ('inputs', 'outputs') \
+                      else ( not is_trait_input(pipeline_plug) and\
+                             is_trait_output(pipeline_plug) ))
+                
+            print('\tParameter:', str(in_param), 'is_output :', str(output))
             if output:
+                continue
+            # Handles the case where trait is both out/in
+            if is_trait_both(pipeline_plug) and self.name is 'inputs':
                 continue
             param_text = self._parameter_text(in_param)
             param_name = QtGui.QGraphicsTextItem(self)
@@ -370,10 +387,32 @@ class NodeGWidget(QtGui.QGraphicsItem):
             pos = pos + param_name.boundingRect().size().height()
 
         for out_param, pipeline_plug in six.iteritems(self.parameters):
-            output = (not is_trait_output(pipeline_plug) if self.name in (
-                'inputs', 'outputs') else is_trait_output(pipeline_plug))
-            if not output:
+          
+####         original
+#            output = (not is_trait_output(pipeline_plug) if self.name in (
+#                'inputs', 'outputs') else is_trait_output(pipeline_plug))
+#            if not output:
+#                continue
+####
+        
+            input = (not is_trait_input(pipeline_plug) 
+                     if self.name in ('inputs', 'outputs') \
+                     else (not is_trait_output(pipeline_plug) and\
+                           is_trait_input(pipeline_plug) ))
+            print('\tParameter:', str(out_param), 'is_input :', str(input))
+            if input:
                 continue
+            # Handles the case where trait is both out/in
+            if is_trait_both(pipeline_plug) and self.name is 'outputs':
+                continue
+        
+##            input = (is_trait_output(pipeline_plug) if self.name in (
+##                'inputs', 'outputs') else is_trait_input(pipeline_plug))
+#            input = is_trait_input(pipeline_plug)
+#            print('\tParameter:', str(out_param), 'is_input :', str(input))
+#            if input:
+#                continue
+        
             param_text = self._parameter_text(out_param)
             if out_param in selections:
                 param_name = self._colored_text_item('select: ' + out_param,
@@ -669,7 +708,7 @@ class NodeGWidget(QtGui.QGraphicsItem):
         return param_text
 
     def update_node(self):
-        # print('update_node', self.name)
+        print('update_node', self.name)
         self._set_brush()
         self.box_title.setBrush(self.title_brush)
         self.box.setBrush(self.bg_brush)
@@ -997,6 +1036,9 @@ class PipelineScene(QtGui.QGraphicsScene):
         if self.logical_view:
             source_param = 'outputs'
             dest_param = 'inputs'
+#        print('\t\t  Trying to link', 
+#              str(source_gnode_name)+'.'+str(source_param), 'to', 
+#              str(dest_gnode_name)+'.'+str(dest_param))
         source_dest = ((str(source_gnode_name), str(source_param)),
             (str(dest_gnode_name), str(dest_param)))
         if source_dest in self.glinks:
@@ -1014,7 +1056,9 @@ class PipelineScene(QtGui.QGraphicsScene):
         source_gnode = self.gnodes[source_gnode_name]
         dest_gnode = self.gnodes.get(dest_gnode_name)
         if dest_gnode is not None:
-            if dest_param in dest_gnode.in_plugs:
+            if dest_param in dest_gnode.in_plugs and source_param in source_gnode.out_plugs:
+#                print("\t\t\tdest_gnode_name ", dest_gnode_name)
+#                print("\t\t\tdest_param ", dest_param)
 #                print("\t\t\tsource_gnode_name ", source_gnode_name)
 #                print("\t\t\tsource_param ", source_param)
 #                print("\t\t\tsource_gnode.out_plugs ", source_gnode.out_plugs)
@@ -1027,6 +1071,7 @@ class PipelineScene(QtGui.QGraphicsScene):
                     active, weak)
                 self.glinks[source_dest] = glink
                 self.addItem(glink)
+#                print("\t\t\tLinked!")
 
     def _remove_link(self, source_dest):
         source, dest = source_dest
@@ -1078,25 +1123,35 @@ class PipelineScene(QtGui.QGraphicsScene):
                 pipeline_inputs[name] = plug
 #        print('DICTIONARIES : Input = ', str(pipeline_inputs))
 #        print('DICTIONARIES : Output = ', str(pipeline_outputs))
+                
+                
+#        if pipeline_inputs:
+                
+        print('pipeline_inputs = ', str(pipeline_inputs))
         if pipeline_inputs:
             self._add_node(
                 'inputs', NodeGWidget('inputs', pipeline_inputs, pipeline,
                     process=pipeline,
                     colored_parameters=self.colored_parameters,
                     logical_view=self.logical_view))
+
+#        if len(pipeline_inputs.keys())>0:
 #          for in_dict_key, in_dict_val in six.iteritems(pipeline_inputs):
-#            local_inputs = SortedDictionary()
-#            local_inputs[in_dict_key] = in_dict_val
-#            print('local_input = ', str(local_inputs))
-#            self._add_node(
-#                'inputs', NodeGWidget('inputs', local_inputs, pipeline,
-#                    process=pipeline,
-#                    colored_parameters=self.colored_parameters,
-#                    logical_view=self.logical_view))
+#              local_inputs = SortedDictionary()
+#              local_inputs[in_dict_key] = in_dict_val
+#              print('local_input = ', str(local_inputs))
+#              self._add_node(
+#                  'inputs', NodeGWidget('inputs', local_inputs, pipeline,
+#                      process=pipeline,
+#                      colored_parameters=self.colored_parameters,
+#                      logical_view=self.logical_view))
+                    
         for node_name, node in six.iteritems(pipeline.nodes):
             if not node_name:
                 continue
             self.add_node(node_name, node)
+            
+        print('pipeline_outputs = ', str(pipeline_outputs))
         if pipeline_outputs:
             self._add_node(
                 'outputs', NodeGWidget(
@@ -1104,16 +1159,21 @@ class PipelineScene(QtGui.QGraphicsScene):
                     process=pipeline,
                     colored_parameters=self.colored_parameters,
                     logical_view=self.logical_view))
+                    
+                    
+#        if len(pipeline_outputs.keys())>0:
 #          for in_dict_key, in_dict_val in six.iteritems(pipeline_outputs):
-#            local_outputs = SortedDictionary()
-#            local_outputs[in_dict_key] = in_dict_val
-#            print('local_outputs = ', str(local_outputs))
-#            self._add_node(
-#                'outputs', NodeGWidget(
-#                    'outputs', local_outputs, pipeline,
-#                    process=pipeline,
-#                    colored_parameters=self.colored_parameters,
-#                    logical_view=self.logical_view))
+#              local_outputs = SortedDictionary()
+#              local_outputs[in_dict_key] = in_dict_val
+#              print('local_outputs = ', str(local_outputs))
+#              self._add_node(
+#                  'outputs', NodeGWidget(
+#                      'outputs', local_outputs, pipeline,
+#                      process=pipeline,
+#                      colored_parameters=self.colored_parameters,
+#                      logical_view=self.logical_view))
+                    
+                    
 #        print('INPUTS :', str(pipeline_inputs) )
 #        print('OUTPUTS :', str(pipeline_outputs) )
         for source_node_name, source_node in six.iteritems(pipeline.nodes):
@@ -1130,7 +1190,9 @@ class PipelineScene(QtGui.QGraphicsScene):
 #                    print('\t\tdest_node :', str(dest_node) )
 #                    print('\t\tdest_plug :', str(dest_plug) )
 #                    print('\t\tweak_link :', str(weak_link) )
-                    if dest_node is pipeline.nodes.get(dest_node_name):
+                     
+                    if dest_node is pipeline.nodes.get(dest_node_name) :
+                         
                         self.add_link(
                             (source_node_name, source_parameter),
                             (dest_node_name, dest_parameter),
@@ -1158,10 +1220,12 @@ class PipelineScene(QtGui.QGraphicsScene):
                 if node_name == 'inputs':
                     pipeline_inputs = SortedDictionary()
                     for name, plug in six.iteritems(node.plugs):
-                        if not is_trait_output(plug):
+#                        if not is_trait_output(plug):
+                        if is_trait_input(plug):
                             pipeline_inputs[name] = plug
                     gnode.parameters = pipeline_inputs
-                else:
+#                else:
+                if node_name == 'outputs':
                     pipeline_outputs = SortedDictionary()
                     for name, plug in six.iteritems(node.plugs):
                         if is_trait_output(plug):
@@ -1189,7 +1253,8 @@ class PipelineScene(QtGui.QGraphicsScene):
                 for name, plug in six.iteritems(node.plugs):
                     if is_trait_output(plug):
                         pipeline_outputs[name] = plug
-                    else:
+#                    else:
+                    if is_trait_input(plug):
                         pipeline_inputs[name] = plug
                 if pipeline_inputs and 'inputs' not in self.gnodes:
                     self._add_node(
@@ -1303,7 +1368,8 @@ class PipelineScene(QtGui.QGraphicsScene):
                 for name, plug in six.iteritems(node.plugs):
                     if is_trait_output(plug):
                         pipeline_outputs['outputs'] = plug
-                    else:
+#                    else:
+                    if is_trait_input(plug):
                         pipeline_inputs['inputs'] = plug
                 if pipeline_inputs and 'inputs' not in self.gnodes:
                     self._add_node(

@@ -880,11 +880,18 @@ class CallbackNode(Node):
         self._outputs = outputs
 
         # format inputs and outputs to inherit from Node class
-        node_inputs = [dict(name=i, optional=(i in make_optional)) 
+        node_inputs = [dict(name=i, optional=(i in make_optional),
+                                    output=False,
+                                    input=True) 
                        for i in inputs]
-        node_outputs = [dict(name=i, optional=(i in make_optional))
+        node_outputs = [dict(name=i, optional=(i in make_optional),
+                                    output=True,
+                                    input=False)
                         for i in outputs]
-
+                                           
+        print('Inputs :', str(node_inputs))
+        print('Outputs :', str(node_outputs))
+        
         super(CallbackNode, self).__init__(pipeline, name, node_inputs,
                                            node_outputs)
                                            
@@ -892,8 +899,10 @@ class CallbackNode(Node):
         for i, trait in zip(inputs, input_types):
             self.add_trait(i, trait)
             self.trait(i).output = False
+            self.trait(i).input = True
         for i, trait in zip(outputs, output_types):
             self.add_trait(i, trait)
             self.trait(i).output = True
+            self.trait(i).input = False
             
         self.on_trait_change(self.callback)

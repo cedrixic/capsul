@@ -616,7 +616,7 @@ class Pipeline(Process):
         
     
   
-    def add_callback(self, name, callback_type):
+    def add_callback(self, name, callback_type, do_not_export=None, **kwargs):
         """ Add a callback node in the pipeline
 
         Parameters
@@ -649,6 +649,19 @@ class Pipeline(Process):
         node = callback_type(self, name)
         self.nodes[name] = node
         self._set_subprocess_context_name(node, name)
+        
+        
+
+        do_not_export = set(do_not_export or [])
+        do_not_export.update(kwargs)        
+        
+        # Change plug default properties
+        for parameter_name in node.plugs:
+#            print('Default value to parameter', str(parameter_name))
+            # Do not export plug
+            if (parameter_name in do_not_export):
+                self.do_not_export.add((name, parameter_name))
+        
 #    
 #    def add_node(self, name, node_type, inputs, outputs, export=True,
 #                 make_optional=(), output_types=None):
@@ -1424,6 +1437,7 @@ class Pipeline(Process):
 
                 # If a Pipeline is found: the meta graph node parameter
                 # contains a sub Graph
+                print('node_name :', node_name)
                 if isinstance(node.process, Pipeline):
                     gnode = GraphNode(
                         node_name, node.process.workflow_graph(False))

@@ -13,6 +13,7 @@ class ByteCopy(Process):
 
     input = File()
     output = File(input=True, output=True)
+#    output = File(output=True)
         
     def _run_process(self):
         filename, offset = self.input.split('?')
@@ -28,30 +29,35 @@ class ByteCopy(Process):
         file.write(v)
         
 class CreateOffsets(CallbackNode):
-    input = File()
-#    processors = Int()
-    offsets = List(Str, output=True)
+  
     def __init__(self, pipeline, name, **kwargs):     
       super(CreateOffsets, self).__init__(pipeline, name, 
                                                 ['input'],
                                                 ['offsets'],
                                                 input_types=[File],
                                                 output_types=[List(Str, output=True)])
+      self.add_trait("input", File())
+      self.add_trait("offsets", List(Str, output=True))
+    
     def callback(self):
         if self.input is not Undefined and os.path.exists(self.input):
-            file = open(self.input,'rb')
-            file.seek(0, 2)
-            file_size = file.tell()
-            self.offsets = ['?%d' % i for i in range(file_size)]
+#            file = open(self.input,'rb')
+#            file.seek(0, 2)
+#            file_size = file.tell()
+#            self.offsets = ['?%d' % i for i in range(file_size)]
+        
+            self.offsets = ['_offset1', '_offset2', '_offset3', '_offset4']
 
 class FileCreation(Process):
     """ File creation
     """
-    input = File(optional=True)
-    output = File(output=True, optional=True)
+#    input = File(optional=True)
+#    output = File(output=True, optional=True)
     
     def __init__(self):
         super(FileCreation, self).__init__()
+        self.add_trait("input", File(optional=True))
+        self.add_trait("output", File(output=True, optional=True))
         
     def _run_process(self):
         file = open(self.input, 'rb')
@@ -60,6 +66,18 @@ class FileCreation(Process):
         file = open(self.output,'wb')
         file.seek(size-1)
         file.write('\0')
+        
+class CheckOutput(Process):
+    """ Output file checking
+    """
+    
+    def __init__(self):
+        super(CheckOutput, self).__init__()
+        self.add_trait("input", File(optional=True))
+        self.add_trait("output", File(output=True, optional=True))
+        
+    def _run_process(self):
+        output = input
  
 class BlockIteration(Pipeline):
     """ Simple Pipeline to test the Callback Node
@@ -72,17 +90,27 @@ class BlockIteration(Pipeline):
         #self.declare_inout_parameter('iterative_byte_copy.output')
 #        self.export_parameter('iterative_byte_copy','output')
         
-        self.add_process('create_output', 'FileCreation')
+        self.add_process('create_output', 'capsul.pipeline.test.test_uri.FileCreation',
+                         do_not_export=['output'],)
+        self.add_link('create_output.output->iterative_byte_copy.output')
 #        self.add_process('create_output', 'capsul.pipeline.test.test_uri.FileCreation')
 #        self.export_parameter('create_output', 'input')
 #        self.export_parameter('create_output', 'output')
-        self.add_callback('create_offsets', CreateOffsets)
+        
+        # Have to specify do_not_export parameter for add_callback
+        # Apparently, list of inputs/outputs are not updated when adding a callback
+        # TO CHECK!
+        self.add_callback('create_offsets', CreateOffsets,
+                           do_not_export=['offsets'],)
         self.add_link('create_offsets.offsets->iterative_byte_copy.offset')
         print('\nExport creat_offset as input')
         self.export_parameter('create_offsets', 'input')
         self.add_link('input->iterative_byte_copy.input')
         self.add_link('input->create_output.input')
         print('\nExport create_output as output')
+        self.add_process('check_output', 'capsul.pipeline.test.test_uri.CheckOutput')
+        self.add_link('iterative_byte_copy.output->check_output.input')
+        self.export_parameter('check_output', 'output')
         #a remettre - pour passer ctest en cours de dev
 #        self.export_parameter('create_output', 'output')
 #        self.add_link('iterative_byte_copy.output->output')
@@ -108,8 +136,8 @@ class TestPipeline(unittest.TestCase):
                 destnodename = 'Pipeline'
               print(str(nodename) + '.'+str(plugname)+' links to ' +
                     str(destnodename) + '.'+str(destplugname) )
-        graph = self.pipeline.workflow_graph()
-        print("GRAPH : \n" + str(graph))
+#        graph = self.pipeline.workflow_graph()
+#        print("GRAPH : \n" + str(graph))
         print("NODES : \n" + str(self.pipeline.nodes))
         print("REPR : \n" + str(self.pipeline.workflow_repr))
         print("LIST : \n" + str(self.pipeline.workflow_list))
