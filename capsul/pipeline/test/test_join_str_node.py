@@ -5,6 +5,7 @@ Tests instance of JoinStrNode class
 
 from __future__ import print_function
 import unittest
+import tempfile
 import os
 
 
@@ -13,32 +14,32 @@ from capsul.api import Process, Pipeline, JoinStrNode
 # Trait import
 from traits.api import Float, File, Int, List, Str, Undefined
 
-class ByteCopy(Process):
+class TestProcess(Process):
 
     input = File()
     output = File(input=True, output=True)
         
     def _run_process(self):
-        filename, offset = self.input.split('?')
-        offset = int(offset)
-        file = open(filename, 'rb')
-        file.seek(offset)
-        v = file.read(1)
         
-        filename, offset = self.output.split('?')
-        offset = int(offset)
-        file = open(filename, 'rb+')
-        file.seek(offset)
-        file.write(v)
+        output = tempfile.TemporaryFile(prefix='tmpOut', dir=str(self.directory))
         
         
 #class TestPipeline(Pipeline):
 class TestPipeline(unittest.TestCase):
   
     def setUp(self):
-        print('SETUP')
-        self.pipeline = JoinStrNode(ByteCopy,  \
-                                {'input':'offset','output':'offset'})
+        print('Pipeline setup')
+        print('Create input files')
+        self.directory = tempfile.mkdtemp("join_test")
+        self.tmpIn = tempfile.TemporaryFile(prefix='tmpIn', dir=str(self.directory))
+        self.tmpInOr = self.tmpIn[:-2]
+        self.tmpOut = tempfile.TemporaryFile(suffix='_1',prefix='tmpOut', dir=str(self.directory))
+        self.tmpOutOr = self.tmpOut[:-2]
+        self.offset = '_1'
+                
+        self.pipeline = JoinStrNode(TestProcess,  \
+                                {self.tmpInOr:self.offset,\
+                                 self.tmpOutOr:self.offset})
         print("NODES : \n" + str(self.pipeline.nodes))
         print("REPR : \n" + str(self.pipeline.workflow_repr))
         print("LIST : \n" + str(self.pipeline.workflow_list))
