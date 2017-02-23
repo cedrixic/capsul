@@ -33,6 +33,9 @@ TODO :
 
 '''
 class JoinStrCallbackNode(CallbackNode):
+    """Callback node to concatenate two strings to create a single input/output
+    """
+    
     def __init__(self, pipeline, name, **kwargs):     
       super(JoinStrCallbackNode, self).__init__(pipeline, name, 
                                                 ['str_in1', 'str_in2'],
@@ -49,6 +52,8 @@ class JoinStrCallbackNode(CallbackNode):
         print('JoinStrCallbackNode->callback: str_out:', self.str_out)
         
 class RemoveStrCallbackNode(CallbackNode):
+    """Callback node to split a single string in two strings
+    """
     def __init__(self, pipeline, name, **kwargs):     
       super(RemoveStrCallbackNode, self).__init__(pipeline, name, 
                                                 ['str_in1', 'str_in2'],
@@ -69,11 +74,13 @@ class RemoveStrCallbackNode(CallbackNode):
         print('JoinStrCallbackNode->callback: str_out:', self.str_out)
   
 class JoinStrNode(Pipeline):
-    
-    def __init__(self, process, param_dict):
+    """Class calling a process, and dealing with partial access issue
+    """
+    def __init__(self, process, param_dict, concat_dict):
         super(JoinStrNode, self).__init__()
         
         print ('param_dict:', param_dict)
+        print ('concat_dict:', concat_dict)
         #self.process = process
         self.add_process('internal_process', process)
                 
@@ -124,49 +131,55 @@ class JoinStrNode(Pipeline):
                                               optional = True))
             
             
-          param_val = param_dict[param_name]
-          callback_node_name = "JoinStrCallbackNode_" + str(i)
-          callback_remove_node_name = "RemoveStrCallbackNode_" + str(i)
-#          self.add_callback(callback_node_name, JoinStrCallbackNode)
-#          self.add_callback(callback_remove_node_name, RemoveStrCallbackNode)
-          if output:
-            if verbose :
-              print('\tplug type : output')
-              print('\tadd_link:', 'internal_process.' + param_name + '->' + callback_remove_node_name + '.str_in1')
-              print('\tadd_link:', callback_remove_node_name + '.str_out->' + param_name)
-              print('\tadd_link:', param_val + '->' + callback_remove_node_name + '.str_in2')
-              print('\tplug type : output, creating joinCallback')
-              print('\tadd_link:', param_name + '->' + callback_node_name + '.str_in1')
-              print('\tadd_link:', callback_node_name + '.str_out->' + callback_remove_node_name + '.str_in1')
-              print('\tadd_link:', param_val + '->' + callback_node_name + '.str_in2')
-            #add removeCallback
-            self.add_callback(callback_remove_node_name, RemoveStrCallbackNode)
-            self.add_link('internal_process.' + param_name + '->' + callback_remove_node_name + '.str_in1')
-            self.add_link( callback_remove_node_name + '.str_out->' + param_name)
-            self.add_link(param_val + '->' + callback_remove_node_name + '.str_in2')
-#            #addJoinCallback
-            self.add_callback(callback_node_name, JoinStrCallbackNode)
-            self.add_link(param_name + '->' + callback_node_name + '.str_in1')
-            self.add_link( callback_node_name + '.str_out->' + callback_remove_node_name + '.str_in1')
-            self.add_link(param_val + '->' + callback_node_name + '.str_in2')
+          #if offset must be concatenated with current parameter
+          if param_name in concat_dict:
+#            param_val = param_dict[param_name]
+            param_val = concat_dict[param_name]
+            offset = concat_dict[param_name]
+            callback_node_name = "JoinStrCallbackNode_" + str(i)
+            callback_remove_node_name = "RemoveStrCallbackNode_" + str(i)
+  #          self.add_callback(callback_node_name, JoinStrCallbackNode)
+  #          self.add_callback(callback_remove_node_name, RemoveStrCallbackNode)
             
-            
-            
-#          else:
-          if input:
-            if verbose :
-              print('\tplug type : input')
-              print('\tadd_link:', param_name + '->' + callback_node_name + '.str_in1')
-              print('\tadd_link:', callback_node_name + '.str_out->internal_process.' + param_name)
-              print('\tadd_link:', param_val + '->' + callback_node_name + '.str_in2')
-            if not output:
-              print('\tplug type : no output, creating joinCallback')
+            #if 
+            if output:
+              if verbose :
+                print('\tplug type : output')
+                print('\tadd_link:', 'internal_process.' + param_name + '->' + callback_remove_node_name + '.str_in1')
+                print('\tadd_link:', callback_remove_node_name + '.str_out->' + param_name)
+                print('\tadd_link:', param_val + '->' + callback_remove_node_name + '.str_in2')
+                print('\tplug type : output, creating joinCallback')
+                print('\tadd_link:', param_name + '->' + callback_node_name + '.str_in1')
+                print('\tadd_link:', callback_node_name + '.str_out->' + callback_remove_node_name + '.str_in1')
+                print('\tadd_link:', param_val + '->' + callback_node_name + '.str_in2')
+              #add removeCallback
+              self.add_callback(callback_remove_node_name, RemoveStrCallbackNode)
+              self.add_link('internal_process.' + param_name + '->' + callback_remove_node_name + '.str_in1')
+              self.add_link( callback_remove_node_name + '.str_out->' + param_name)
+              self.add_link(param_val + '->' + callback_remove_node_name + '.str_in2')
+  #            #addJoinCallback
               self.add_callback(callback_node_name, JoinStrCallbackNode)
-#            self.add_callback(callback_node_name, JoinStrCallbackNode)
-              #3 lignes du dessous a desindenter d'un cran
-            self.add_link(param_name + '->' + callback_node_name + '.str_in1')
-            self.add_link( callback_node_name + '.str_out->internal_process.' + param_name)
-            self.add_link(param_val + '->' + callback_node_name + '.str_in2')
+              self.add_link(param_name + '->' + callback_node_name + '.str_in1')
+              self.add_link( callback_node_name + '.str_out->' + callback_remove_node_name + '.str_in1')
+              self.add_link(param_val + '->' + callback_node_name + '.str_in2')
+              
+              
+              
+  #          else:
+            if input:
+              if verbose :
+                print('\tplug type : input')
+                print('\tadd_link:', param_name + '->' + callback_node_name + '.str_in1')
+                print('\tadd_link:', callback_node_name + '.str_out->internal_process.' + param_name)
+                print('\tadd_link:', offset + '->' + callback_node_name + '.str_in2')
+              if not output:
+                print('\tplug type : no output, creating joinCallback')
+                self.add_callback(callback_node_name, JoinStrCallbackNode)
+  #            self.add_callback(callback_node_name, JoinStrCallbackNode)
+                #3 lignes du dessous a desindenter d'un cran
+              self.add_link(param_name + '->' + callback_node_name + '.str_in1')
+              self.add_link( callback_node_name + '.str_out->internal_process.' + param_name)
+              self.add_link(offset + '->' + callback_node_name + '.str_in2')
             
 
 #          
