@@ -47,9 +47,9 @@ class JoinStrCallbackNode(CallbackNode):
     def callback(self, *args, **kwargs):
 #      print('JoinStrCallbackNode->callback: ', 'str_in1:', self.str_in1, ', ', 
 #                                               'str_in2:', self.str_in2)
-      if self.str_in1 is not Undefined and self.str_in2 is not Undefined :   
+      if self.str_in1 is not Undefined and self.str_in2 is not Undefined :
         self.str_out = self.str_in1 + self.str_in2
-        print('JoinStrCallbackNode->callback: str_out:', self.str_out)
+#         print('JoinStrCallbackNode->callback: str_out:', self.str_out)
         
 class RemoveStrCallbackNode(CallbackNode):
     """Callback node to split a single string in two strings
@@ -71,26 +71,29 @@ class RemoveStrCallbackNode(CallbackNode):
          self.str_in1.endswith(self.str_in2):   
         
         self.str_out = self.str_in1[:-len(self.str_in2)]
-        print('JoinStrCallbackNode->callback: str_out:', self.str_out)
+#         print('RemoveStrCallbackNode->callback: str_out:', self.str_out)
   
 class JoinStrNode(Pipeline):
     """Class calling a process, and dealing with partial access issue
     """
     def __init__(self, process, param_dict, concat_dict):
         super(JoinStrNode, self).__init__()
-        
-        print ('param_dict:', param_dict)
-        print ('concat_dict:', concat_dict)
+                
+#         verbose = False
+        verbose = True
         #self.process = process
         self.add_process('internal_process', process)
-                
-#        verbose = False
-        verbose = True
         
         i = 0
-        print('Iterate through parameters dictionary...')
+        
+        if verbose : 
+          print ('param_dict:', param_dict)
+          print ('concat_dict:', concat_dict)
+          print('Iterate through parameters dictionary...')
+          
         for param_name, param_val in six.iteritems(param_dict) :
-          print('\nParameter : ', param_name, ' - Value : ', param_val)
+          if verbose :
+            print('\nParameter : ', param_name, ' - Value : ', param_val)
           
           # Get process traits for param_name to determine direction
           optional = process.class_traits()[param_name].optional
@@ -121,7 +124,8 @@ class JoinStrNode(Pipeline):
 #          Adding offset as a trait only if does not exists yet (to check!!)
 
           if not self.traits().get(param_name) :
-            print("No value for param " +  str(param_name) + " - Adding it")
+            if verbose :
+              print("No value for param " +  str(param_name) + " - Adding it")
             self.add_trait(param_name, String(output = False, 
                                               input = True,
                                               optional = True))
@@ -202,18 +206,18 @@ class JoinStrNode(Pipeline):
               self.add_link( callback_node_name + '.str_out->internal_process.' + param_name)
               #self.add_link(offset + '->' + callback_node_name + '.str_in2')
             
-
           #if offset must be concatenated with current parameter
           else:
             if verbose :
               print('\tplug type : input')
               print('\tadd_link:', param_name + '->internal_process.' + param_name)
             self.add_link(param_name + '->internal_process.' + param_name)
+            
+          i += 1
 
 
 #          print('\tadd_link:', param_val + '->' + callback_node_name + '.str_in2')
 #          self.add_link(param_val + '->' + callback_node_name + '.str_in2')
-          i += 1
             
 #           # Update pipeline Traits
 #          param_out_name = "{}_out".format(str(param_name))

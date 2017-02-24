@@ -7,26 +7,38 @@ import os
 from capsul.api import Process, Pipeline, JoinStrNode, CallbackNode
 
 # Trait import
-from traits.api import Float, File, Int, List, Str, Undefined
+from traits.api import Float, File, Int, List, String, Undefined
 
 class ByteCopy(Process):
 
-    input = File()
+    input = File(input=True)
     output = File(input=True, output=True)
+#     offset = String(input=True, output=False)
 #    output = File(output=True)
         
     def _run_process(self):
-        filename, offset = self.input.split('?')
-        offset = int(offset)
-        file = open(filename, 'rb')
-        file.seek(offset)
-        v = file.read(1)
-        
-        filename, offset = self.output.split('?')
-        offset = int(offset)
-        file = open(filename, 'rb+')
-        file.seek(offset)
-        file.write(v)
+#         command = ( 'AimsMorphoMath ' + 
+#                      ' -m ' + str(self.mode) +
+#                      ' -r ' + str(self.kernel_radius) +
+#                      ' -x ' + str(self.kernel) +
+#                      ' -y ' + str(self.kernel) +
+#                      ' -z ' + str(self.kernel) )
+          
+        command = 'AimsMorphoMath -i \'' + self.input.fullPath() + \
+                   '\' -o \'' + self.output.fullPath()+ '\''
+        print('launched : ' + command)
+      #   os.system(command)
+#         filename, offset = self.input.split('?')
+#         offset = int(offset)
+#         file = open(filename, 'rb')
+#         file.seek(offset)
+#         v = file.read(1)
+#         
+#         filename, offset = self.output.split('?')
+#         offset = int(offset)
+#         file = open(filename, 'rb+')
+#         file.seek(offset)
+#         file.write(v)
         
 class CreateOffsets(CallbackNode):
   
@@ -84,8 +96,10 @@ class BlockIteration(Pipeline):
     """
     def pipeline_definition(self):
         join_node = JoinStrNode(ByteCopy,  \
+                                {'input':'input_file','output':'output_file'},\
                                 {'input':'offset','output':'offset'})
 #                                {'input.ima':'&ox=1','output.ima':'&ox=1'})
+
         self.add_iterative_process( 'iterative_byte_copy', join_node, ['offset'])
         #self.declare_inout_parameter('iterative_byte_copy.output')
 #        self.export_parameter('iterative_byte_copy','output')
