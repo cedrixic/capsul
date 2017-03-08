@@ -47,9 +47,9 @@ class CreateOffsets(CallbackNode):
                                                 ['input'],
                                                 ['offsets'],
                                                 input_types=[File],
-                                                output_types=[List(Str, output=True)])
+                                                output_types=[List(String, output=True)])
       self.add_trait("input", File())
-      self.add_trait("offsets", List(Str, output=True))
+      self.add_trait("offsets", List(String, output=True))
     
     def callback(self):
         if self.input is not Undefined and os.path.exists(self.input):
@@ -97,7 +97,7 @@ class BlockIteration(Pipeline):
     def pipeline_definition(self):
         join_node = JoinStrNode(ByteCopy,  \
                                 {'input':'input_file','output':'output_file'},\
-                                {'input':'offset','output':'offset'})
+                                {'input':'?x12','output':'?x12'})
 #                                {'input.ima':'&ox=1','output.ima':'&ox=1'})
 
         self.add_iterative_process( 'iterative_byte_copy', join_node, ['offset'])

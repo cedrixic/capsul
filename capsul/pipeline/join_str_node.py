@@ -136,26 +136,31 @@ class JoinStrNode(Pipeline):
 #            param_val = param_dict[param_name]
             param_val = concat_dict[param_name]
             offset = concat_dict[param_name]
-            callback_node_name = "JoinStrCallbackNode_" + str(i)
-            callback_remove_node_name = "RemoveStrCallbackNode_" + str(i)
+#            callback_node_name = "JoinStrCallbackNode_" + str(i)
+#            callback_remove_node_name = "RemoveStrCallbackNode_" + str(i)
+#            offset_param_name = str('offset_'+str(i))
             
-            offset_param_name = str('offset_'+str(i))
+            callback_node_name = "JoinStrCallbackNode_" + str(param_name)
+            callback_remove_node_name = "RemoveStrCallbackNode_" + str(param_name)
+#            offset_param_name = "offset_" + str(param_name)
+            offset_param_name = "offset"
             if verbose :
               print('\tadd_trait:', offset_param_name)
-            self.add_trait(offset_param_name, String(output = False, 
-                                                     input = True,
-                                                     optional = optional))
-            
-            
-  #          self.add_callback(callback_node_name, JoinStrCallbackNode)
-  #          self.add_callback(callback_remove_node_name, RemoveStrCallbackNode)
-            
-            #if parameter is an output:
-            #  - add a removeStrCallbackNode to recreate the final output parameter name
-            #    after the internal process is executed
-            #  - add an addStrCallbackNode to create the partial access compatible
-            #    parameter name and linked to removeCallback node
-            
+            if not self.traits().get(offset_param_name) :
+              self.add_trait(offset_param_name, String(output = False, 
+                                                       input = True,
+                                                       optional = optional))
+              
+              
+    #          self.add_callback(callback_node_name, JoinStrCallbackNode)
+    #          self.add_callback(callback_remove_node_name, RemoveStrCallbackNode)
+              
+              #if parameter is an output:
+              #  - add a removeStrCallbackNode to recreate the final output parameter name
+              #    after the internal process is executed
+              #  - add an addStrCallbackNode to create the partial access compatible
+              #    parameter name and linked to removeCallback node
+              
             if output:
               if verbose :
                 print('\tplug type : output')
@@ -205,7 +210,7 @@ class JoinStrNode(Pipeline):
               self.add_link(param_name + '->' + callback_node_name + '.str_in1')
               self.add_link( callback_node_name + '.str_out->internal_process.' + param_name)
               #self.add_link(offset + '->' + callback_node_name + '.str_in2')
-            
+              
           #if offset must be concatenated with current parameter
           else:
             if verbose :

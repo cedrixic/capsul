@@ -105,8 +105,33 @@ if __name__ == "__main__":
         app = QtGui.QApplication(sys.argv)
         from capsul.qt_gui.widgets import PipelineDevelopperView
 
+#        pipeline = JoinStrNode(TestProcess,  \
+#                                {'input':'offset','output':'offset'})
+        
+
+        directory = tempfile.mkdtemp("join_test")
+        offset = '_1'
+        tmpIn = tempfile.NamedTemporaryFile(\
+            suffix=str(offset),prefix='tmpIn', dir=str(directory))
+        tmpInOr = tmpIn.name[:-2]
+        tmpOut = tempfile.NamedTemporaryFile(\
+            suffix=str(offset),prefix='tmpOut', dir=str(directory))
+        tmpOutOr = tmpOut.name[:-2]
+
+        mode = 'ero'
+        kernel = 3
+        kernel_redius = 0.5
+                
         pipeline = JoinStrNode(TestProcess,  \
-                                {'input':'offset','output':'offset'})
+                                {'input':tmpInOr,\
+                                 'output':tmpOutOr,
+                                 'mode':mode,
+                                 'kernel':kernel,
+                                 'kernel_radius':kernel_redius},\
+                                {'input':offset,\
+                                 'output':offset})        
+        
+        
         
         view1 = PipelineDevelopperView(pipeline, show_sub_pipelines=True,
                                        allow_open_controller=True)
