@@ -16,10 +16,15 @@ from traits.api import Float, File, Int, List, String, Undefined
 
 class TestProcess(Process):
 
-    input = File()
-    output = File(input=True, output=True)
-    kernel_radius = Float(input=True, output=False)
-    kernel = Int(input=True, output=False)
+#    input = File()
+#    output = File(input=True, output=True)
+#    kernel_radius = Float(input=True, output=False)
+#    kernel = Int(input=True, output=False)
+
+    input = String()
+    output = String(input=True, output=True)
+    kernel_radius = String(input=True, output=False)
+    kernel = String(input=True, output=False)
     mode = String(input=True,output=False)
         
     def _run_process(self):

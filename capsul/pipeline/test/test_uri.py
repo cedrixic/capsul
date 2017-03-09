@@ -9,12 +9,22 @@ from capsul.api import Process, Pipeline, JoinStrNode, CallbackNode
 # Trait import
 from traits.api import Float, File, Int, List, String, Undefined
 
+# Capsul import
+from capsul.api import Process
+from capsul.api import Pipeline
+from capsul.pipeline import pipeline_workflow
+
 class ByteCopy(Process):
 
     input = File(input=True)
     output = File(input=True, output=True)
-#     offset = String(input=True, output=False)
-#    output = File(output=True)
+
+#    def __init__(self) :
+#        super(ByteCopy, self).__init__()
+##       input = File(input=True)
+##       output = File(input=True, output=True)
+#        self.add_trait('input', String(input=True))
+#        self.add_trait('output', String(input=True, output=True))
         
     def _run_process(self):
 #         command = ( 'AimsMorphoMath ' + 
@@ -46,9 +56,12 @@ class CreateOffsets(CallbackNode):
       super(CreateOffsets, self).__init__(pipeline, name, 
                                                 ['input'],
                                                 ['offsets'],
-                                                input_types=[File],
+#                                                input_types=[File],
+                                                input_types=[String],
                                                 output_types=[List(String, output=True)])
-      self.add_trait("input", File())
+#      self.add_trait("input", File())
+#      self.add_trait("offsets", List(String, output=True))
+      self.add_trait("input", String())
       self.add_trait("offsets", List(String, output=True))
     
     def callback(self):
@@ -60,24 +73,44 @@ class CreateOffsets(CallbackNode):
         
             self.offsets = ['_offset1', '_offset2', '_offset3', '_offset4']
 
-class FileCreation(Process):
+class FileCreation(CallbackNode):
     """ File creation
     """
-#    input = File(optional=True)
-#    output = File(output=True, optional=True)
     
-    def __init__(self):
-        super(FileCreation, self).__init__()
-        self.add_trait("input", File(optional=True))
-        self.add_trait("output", File(output=True, optional=True))
+    def __init__(self, pipeline, name, **kwargs):     
+        super(FileCreation, self).__init__(pipeline, name, 
+                                                ['input'],
+                                                ['output'],
+#                                                input_types=[File],
+                                                input_types=[String],
+                                                output_types=[String(output=True)])
+        self.add_trait("input", String(optional=True))
+        self.add_trait("output", String(output=True, optional=True))
         
-    def _run_process(self):
-        file = open(self.input, 'rb')
-        file.seek(0, 2)
-        size = file.tell()
-        file = open(self.output,'wb')
-        file.seek(size-1)
-        file.write('\0')
+    def callback(self):
+        if self.input is not Undefined and os.path.exists(self.input):
+            self.output = self.input
+
+#class FileCreation(Process):
+#    """ File creation
+#    """
+##    input = File(optional=True)
+##    output = File(output=True, optional=True)
+#    
+#    def __init__(self):
+#        super(FileCreation, self).__init__()
+##        self.add_trait("input", File(optional=True))
+##        self.add_trait("output", File(output=True, optional=True))
+#        self.add_trait("input", String(optional=True))
+#        self.add_trait("output", String(output=True, optional=True))
+#        
+#    def _run_process(self):
+#        file = open(self.input, 'rb')
+#        file.seek(0, 2)
+#        size = file.tell()
+#        file = open(self.output,'wb')
+#        file.seek(size-1)
+#        file.write('\0')
         
 class CheckOutput(Process):
     """ Output file checking
@@ -85,15 +118,24 @@ class CheckOutput(Process):
     
     def __init__(self):
         super(CheckOutput, self).__init__()
-        self.add_trait("input", File(optional=True))
-        self.add_trait("output", File(output=True, optional=True))
+#        self.add_trait("input", File(optional=True))
+#        self.add_trait("output", File(output=True, optional=True))
+        self.add_trait("input", String(optional=True))
+        self.add_trait("output", String(output=True, optional=True))
         
     def _run_process(self):
-        output = input
+#        self.output = self.input
+        os.system('cp -rf '+ str(self.input) + ' ' + str(self.output))
  
 class BlockIteration(Pipeline):
     """ Simple Pipeline to test the Callback Node
     """
+    
+#    # Callback
+    def update_output(self):
+        print('CALLBACK - updating otput value')
+        self.nodes['create_output'].traits()['output'].value = '/tmp/out.ima'
+        
     def pipeline_definition(self):
         join_node = JoinStrNode(ByteCopy,  \
                                 {'input':'input_file','output':'output_file'},\
@@ -104,7 +146,9 @@ class BlockIteration(Pipeline):
         #self.declare_inout_parameter('iterative_byte_copy.output')
 #        self.export_parameter('iterative_byte_copy','output')
         
-        self.add_process('create_output', 'capsul.pipeline.test.test_uri.FileCreation',
+#        self.add_process('create_output', 'capsul.pipeline.test.test_uri.FileCreation',
+#                         do_not_export=['output'],)
+        self.add_callback('create_output', FileCreation,
                          do_not_export=['output'],)
         self.add_link('create_output.output->iterative_byte_copy.output')
 #        self.add_process('create_output', 'capsul.pipeline.test.test_uri.FileCreation')
@@ -117,7 +161,7 @@ class BlockIteration(Pipeline):
         self.add_callback('create_offsets', CreateOffsets,
                            do_not_export=['offsets'],)
         self.add_link('create_offsets.offsets->iterative_byte_copy.offset')
-        print('\nExport creat_offset as input')
+        print('\nExport create_offset as input')
         self.export_parameter('create_offsets', 'input')
         self.add_link('input->iterative_byte_copy.input')
         self.add_link('input->create_output.input')
@@ -129,12 +173,18 @@ class BlockIteration(Pipeline):
 #        self.export_parameter('create_output', 'output')
 #        self.add_link('iterative_byte_copy.output->output')
         
+#         Callback
+        self.on_trait_change(self.update_output, 'input')
 
 class TestPipeline(unittest.TestCase):
 
     def setUp(self):
 #        print('\n')
         self.pipeline = BlockIteration()
+        input_path = '/tmp/in.ima'
+        os.system('touch ' + str(input_path))
+        print('system update input path in definition')
+        self.pipeline.input = input_path
 
     def test_uri(self):
         print('Nodes dic size : '+ str(len(self.pipeline.nodes)) )
@@ -174,6 +224,10 @@ if __name__ == "__main__":
         from capsul.qt_gui.widgets import PipelineDevelopperView
 
         pipeline = BlockIteration()
+        input_path = '/tmp/in.ima'
+        os.system('touch ' + str(input_path))
+        print('system update input path in definition')
+        pipeline.input = input_path
         view1 = PipelineDevelopperView(pipeline, show_sub_pipelines=True,
                                        allow_open_controller=True)
         view1.show()

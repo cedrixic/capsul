@@ -166,11 +166,11 @@ class JoinStrNode(Pipeline):
                 print('\tplug type : output')
                 print('\tadd_link:', 'internal_process.' + param_name + '->' + callback_remove_node_name + '.str_in1')
                 print('\tadd_link:', callback_remove_node_name + '.str_out->' + param_name)
-                print('\tadd_link:', param_val + '->' + callback_remove_node_name + '.str_in2')
+                print('\tadd_link:', offset_param_name + '->' + callback_remove_node_name + '.str_in2')
                 print('\tplug type : output, creating joinCallback')
                 print('\tadd_link:', param_name + '->' + callback_node_name + '.str_in1')
                 print('\tadd_link:', callback_node_name + '.str_out->' + callback_remove_node_name + '.str_in1')
-                print('\tadd_link:', param_val + '->' + callback_node_name + '.str_in2')
+                print('\tadd_link:', offset_param_name + '->' + callback_node_name + '.str_in2')
               #add removeCallback
               self.add_callback(callback_remove_node_name, RemoveStrCallbackNode)
               self.add_link('internal_process.' + param_name + '->' + callback_remove_node_name + '.str_in1')
@@ -197,9 +197,9 @@ class JoinStrNode(Pipeline):
             if input:
               if verbose :
                 print('\tplug type : input')
+                print('\tadd_link:', offset_param_name + '->' + callback_node_name + '.str_in2')
                 print('\tadd_link:', param_name + '->' + callback_node_name + '.str_in1')
                 print('\tadd_link:', callback_node_name + '.str_out->internal_process.' + param_name)
-                print('\tadd_link:', offset + '->' + callback_node_name + '.str_in2')
               if not output:
                 print('\tplug type : no output, creating joinCallback')
                 self.add_callback(callback_node_name, JoinStrCallbackNode)
