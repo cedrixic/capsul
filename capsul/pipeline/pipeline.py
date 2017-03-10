@@ -940,7 +940,8 @@ class Pipeline(Process):
 
     def export_parameter(self, node_name, plug_name,
                          pipeline_parameter=None, weak_link=False,
-                         is_enabled=None, is_optional=None):
+                         is_enabled=None, is_optional=None,
+                         export_type='both'):
         """ Export a node plug at the pipeline level.
 
         Parameters
@@ -961,6 +962,9 @@ class Pipeline(Process):
             automatic generation)
         is_optional: bool (optional)
             sets the exported parameter to be optional
+        export_type: string (optional)
+            specifies how trait must be exported : as 'input' only,
+            as 'output', or 'both'
         """
         # Get the node and parameter
         node = self.nodes[node_name]
@@ -996,6 +1000,12 @@ class Pipeline(Process):
 
         # Set the trait input property
         trait.input = is_trait_input(trait)
+          
+        # Set the trait input and output properties
+        if export_type is not 'input':
+          trait.input = None
+        if export_type is not 'output':
+          trait.output = None
 
         # Now add the parameter to the pipeline
         self.add_trait(pipeline_parameter, trait)
