@@ -821,7 +821,7 @@ class Switch(Node):
 class CallbackNode(Node):
 
     def __init__(self, pipeline, name, inputs, outputs, make_optional=(),
-                 input_types=None, output_types=None):
+                 input_types=None, output_types=None, process=None):
         """ Generate a Callback Node
 
         Parameters
@@ -848,7 +848,7 @@ class CallbackNode(Node):
             trait).
         """
         #self.__block_output_propagation = False
-        
+        self.process = process
         if not isinstance(inputs, list):
             inputs = [inputs, ]
         if input_types is not None:

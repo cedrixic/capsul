@@ -34,10 +34,12 @@ class ByteCopy(Process):
 #                      ' -y ' + str(self.kernel) +
 #                      ' -z ' + str(self.kernel) )
           
-        command = 'AimsMorphoMath -i \'' + self.input.fullPath() + \
-                   '\' -o \'' + self.output.fullPath()+ '\''
+#        command = 'AimsMorphoMath -i \'' + self.input.fullPath() + \
+#                   '\' -o \'' + self.output.fullPath()+ '\''
+        command = 'cp -rf \'' + self.input.fullPath() + \
+                   ' ' + self.output.fullPath()+ '\''
         print('launched : ' + command)
-      #   os.system(command)
+        os.system(command)
 #         filename, offset = self.input.split('?')
 #         offset = int(offset)
 #         file = open(filename, 'rb')
@@ -71,7 +73,7 @@ class CreateOffsets(CallbackNode):
 #            file_size = file.tell()
 #            self.offsets = ['?%d' % i for i in range(file_size)]
         
-            self.offsets = ['_offset1', '_offset2', '_offset3', '_offset4']
+            self.offsets = ['_1', '_2', '_3', '_4']
 
 class FileCreation(CallbackNode):
     """ File creation
@@ -89,7 +91,8 @@ class FileCreation(CallbackNode):
         
     def callback(self):
         if self.input is not Undefined and os.path.exists(self.input):
-            self.output = self.input
+#            self.output = self.input
+            self.output = '/tmp/output_file'
 
 #class FileCreation(Process):
 #    """ File creation
@@ -132,9 +135,13 @@ class BlockIteration(Pipeline):
     """
     
 #    # Callback
-    def update_output(self):
-        print('CALLBACK - updating otput value')
-        self.nodes['create_output'].traits()['output'].value = '/tmp/out.ima'
+#    def update_output(self):
+#        print('CALLBACK - updating output value')
+#        val = '/tmp/out.ima'
+#        print('before assignement : ' + str(self.nodes['create_output'].traits()['output'].value))
+#        print('assigning val :' + str(val))
+#        self.nodes['create_output'].traits()['output'].value = val
+#        print('assigned value : ' + str(self.nodes['create_output'].traits()['output'].value))
         
     def pipeline_definition(self):
         join_node = JoinStrNode(ByteCopy,  \
@@ -166,23 +173,29 @@ class BlockIteration(Pipeline):
         self.add_link('input->iterative_byte_copy.input')
         self.add_link('input->create_output.input')
         print('\nExport create_output as output')
-        self.add_process('check_output', 'capsul.pipeline.test.test_uri.CheckOutput')
-        self.add_link('iterative_byte_copy.output->check_output.input')
-        self.export_parameter('check_output', 'output')
+#        self.add_process('check_output', 'capsul.pipeline.test.test_uri.CheckOutput')
+#        self.add_link('iterative_byte_copy.output->check_output.input')
+#        self.export_parameter('check_output', 'output')
+        self.export_parameter('iterative_byte_copy', 'output', export_type='output')
+        
         #a remettre - pour passer ctest en cours de dev
 #        self.export_parameter('create_output', 'output')
 #        self.add_link('iterative_byte_copy.output->output')
         
-#         Callback
-        self.on_trait_change(self.update_output, 'input')
+##         Callback
+#        self.on_trait_change(self.update_output, 'input')
 
 class TestPipeline(unittest.TestCase):
 
     def setUp(self):
 #        print('\n')
+        os.system('rm -rf /tmp/input_file*')
+        os.system('rm -rf /tmp/output_file*')
         self.pipeline = BlockIteration()
-        input_path = '/tmp/in.ima'
+        input_path = '/tmp/input_file'
         os.system('touch ' + str(input_path))
+        for i in range (1,5) :
+          os.system('touch ' + str(input_path) + '_' + str(i))
         print('system update input path in definition')
         self.pipeline.input = input_path
 
@@ -205,6 +218,12 @@ class TestPipeline(unittest.TestCase):
         print("NODES : \n" + str(self.pipeline.nodes))
         print("REPR : \n" + str(self.pipeline.workflow_repr))
         print("LIST : \n" + str(self.pipeline.workflow_list))
+        
+        
+        workflow = pipeline_workflow.workflow_from_pipeline(self.pipeline)
+#        self.pipeline.workflow_ordered_nodes()
+        
+        
 
         
 def test():
@@ -222,12 +241,17 @@ if __name__ == "__main__":
         from soma.qt_gui.qt_backend import QtGui
         app = QtGui.QApplication(sys.argv)
         from capsul.qt_gui.widgets import PipelineDevelopperView
-
+        
+        os.system('rm -rf /tmp/input_file*')
+        os.system('rm -rf /tmp/output_file*')
         pipeline = BlockIteration()
-        input_path = '/tmp/in.ima'
+        input_path = '/tmp/input_file'
         os.system('touch ' + str(input_path))
+        for i in range (1,5) :
+          os.system('touch ' + str(input_path) + '_' + str(i))
         print('system update input path in definition')
         pipeline.input = input_path
+        
         view1 = PipelineDevelopperView(pipeline, show_sub_pipelines=True,
                                        allow_open_controller=True)
         view1.show()
