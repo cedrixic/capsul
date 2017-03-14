@@ -1449,7 +1449,7 @@ class Pipeline(Process):
                 # contains a sub Graph
                 # Also test if process is a node attribute (useful for 
                 # CallbackNode types, which do not have a process attribute)
-                print('node_name :', node_name)
+#                print('node_name :', node_name)
                 if hasattr(node, 'process') and isinstance(node.process, Pipeline):
                     gnode = GraphNode(
                         node_name, node.process.workflow_graph(False))

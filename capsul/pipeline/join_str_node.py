@@ -4,7 +4,8 @@ import unittest
 
 # Capsul import
 from capsul.api import Pipeline
-from capsul.pipeline.pipeline_nodes import CallbackNode
+from capsul.api import CallbackNode
+#from capsul.pipeline.pipeline_nodes import CallbackNode
 from capsul.process.traits_utils import is_trait_input, is_trait_output
 
 # Trait import
@@ -79,8 +80,8 @@ class JoinStrNode(Pipeline):
     def __init__(self, process, param_dict, concat_dict):
         super(JoinStrNode, self).__init__()
                 
-#         verbose = False
-        verbose = True
+        verbose = False
+#        verbose = True
         #self.process = process
         self.add_process('internal_process', process)
         
@@ -201,7 +202,8 @@ class JoinStrNode(Pipeline):
                 print('\tadd_link:', param_name + '->' + callback_node_name + '.str_in1')
                 print('\tadd_link:', callback_node_name + '.str_out->internal_process.' + param_name)
               if not output:
-                print('\tplug type : no output, creating joinCallback')
+                if verbose :
+                  print('\tplug type : no output, creating joinCallback')
                 self.add_callback(callback_node_name, JoinStrCallbackNode)
   #            self.add_callback(callback_node_name, JoinStrCallbackNode)
                 #3 lignes du dessous a desindenter d'un cran

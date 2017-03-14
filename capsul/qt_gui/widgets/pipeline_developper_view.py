@@ -346,7 +346,7 @@ class NodeGWidget(QtGui.QGraphicsItem):
             selections = self.pipeline.get_processes_selections()
         else:
             selections = []
-        print('BuildRegularViewPlugs in_param for', str(self.name))
+#        print('BuildRegularViewPlugs in_param for', str(self.name))
 #        print('self.parameters :', str(self.parameters))
         for in_param, pipeline_plug in six.iteritems(self.parameters):
           
@@ -362,7 +362,7 @@ class NodeGWidget(QtGui.QGraphicsItem):
                       else ( not is_trait_input(pipeline_plug) and\
                              is_trait_output(pipeline_plug) ))
                 
-            print('\tParameter:', str(in_param), 'is_output :', str(output))
+#            print('\tParameter:', str(in_param), 'is_output :', str(output))
             if output:
                 continue
             # Handles the case where trait is both out/in
@@ -399,7 +399,7 @@ class NodeGWidget(QtGui.QGraphicsItem):
                      if self.name in ('inputs', 'outputs') \
                      else (not is_trait_output(pipeline_plug) and\
                            is_trait_input(pipeline_plug) ))
-            print('\tParameter:', str(out_param), 'is_input :', str(input))
+#            print('\tParameter:', str(out_param), 'is_input :', str(input))
             if input:
                 continue
             # Handles the case where trait is both out/in
@@ -1127,7 +1127,7 @@ class PipelineScene(QtGui.QGraphicsScene):
                 
 #        if pipeline_inputs:
                 
-        print('pipeline_inputs = ', str(pipeline_inputs))
+#        print('pipeline_inputs = ', str(pipeline_inputs))
         if pipeline_inputs:
             self._add_node(
                 'inputs', NodeGWidget('inputs', pipeline_inputs, pipeline,
@@ -1151,7 +1151,7 @@ class PipelineScene(QtGui.QGraphicsScene):
                 continue
             self.add_node(node_name, node)
             
-        print('pipeline_outputs = ', str(pipeline_outputs))
+#        print('pipeline_outputs = ', str(pipeline_outputs))
         if pipeline_outputs:
             self._add_node(
                 'outputs', NodeGWidget(
