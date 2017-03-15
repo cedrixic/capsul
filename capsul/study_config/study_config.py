@@ -34,7 +34,7 @@ from capsul.process.process import Process
 from capsul.study_config.run import run_process
 from capsul.pipeline.pipeline_workflow import (
     workflow_from_pipeline, local_workflow_run)
-from capsul.pipeline.pipeline_nodes import Node
+from capsul.pipeline.pipeline_nodes import Node, CallbackNode
 from capsul.study_config.process_instance import get_process_instance
 from capsul.process.traits_utils import is_trait_output
 
@@ -355,30 +355,37 @@ class StudyConfig(Controller):
                     # Filter process nodes if necessary
                     if not executer_qc_nodes:
                         execution_list = [node for node in execution_list
-                                        if node.node_type != "view_node"]
+#                                         if node.node_type not in ("view_node","CallbackNode")]
+                                          if node.node_type != "view_node"]
                     for node in execution_list:
                         # check temporary outputs and allocate files
                         process_or_pipeline._check_temporary_files_for_node(
                             node, temporary_files)
                 elif isinstance(process_or_pipeline, Process):
                     execution_list.append(process_or_pipeline)
+                
                 else:
                     raise Exception(
                         "Unknown instance type. Got {0}and expect Process or "
                         "Pipeline instances".format(
                             process_or_pipeline.__module__.name__))
+                print('\nExecution nodes : ' + str(execution_list))
+#                 execution_list = [node for node in execution_list
+#                                   if not isinstance(node, CallbackNode)]
 
                 # Execute each process node element
                 for process_node in execution_list:
+#                   p = getattr(process_node, 'process', None)
+#                   if p != None : 
                     # Execute the process instance contained in the node
                     if isinstance(process_node, Node):
-                        result = self._run(process_node.process, 
-                                           output_directory, 
-                                           verbose, **kwargs)
-
+#                      and not isinstance(process_node, CallbackNode):
+                      result = self._run(process_node.process, 
+                                         output_directory, 
+                                         verbose, **kwargs)
                     # Execute the process instance
                     else:
-                        result = self._run(process_node, output_directory,
+                      result = self._run(process_node, output_directory,
                                            verbose, **kwargs)
             finally:
                 # Destroy temporary files

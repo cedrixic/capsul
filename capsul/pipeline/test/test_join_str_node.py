@@ -45,8 +45,8 @@ class TestProcess(Process):
 class TestPipeline(unittest.TestCase):
   
     def setUp(self):
-        print('Pipeline setup')
-        print('Create input files')
+#         print('Pipeline setup')
+#         print('Create input files')
         self.directory = tempfile.mkdtemp("join_test")
         self.offset = '_1'
         self.tmpIn = tempfile.NamedTemporaryFile(\
@@ -60,14 +60,14 @@ class TestPipeline(unittest.TestCase):
         self.kernel = 3
         self.kernel_redius = 0.5
         
-        print('tmpIn : ' + str(self.tmpIn.name))
-        print('tmpInOr : ' + str(self.tmpInOr))
-        print('tmpOut : ' + str(self.tmpOut.name))
-        print('tmpOutOr : ' + str(self.tmpOutOr))
-        print('offset : ' + str(self.offset))
-        print('mode : ' + str(self.mode))
-        print('kernel : ' + str(self.kernel))
-        print('kernel_redius : ' + str(self.kernel_redius))
+#         print('tmpIn : ' + str(self.tmpIn.name))
+#         print('tmpInOr : ' + str(self.tmpInOr))
+#         print('tmpOut : ' + str(self.tmpOut.name))
+#         print('tmpOutOr : ' + str(self.tmpOutOr))
+#         print('offset : ' + str(self.offset))
+#         print('mode : ' + str(self.mode))
+#         print('kernel : ' + str(self.kernel))
+#         print('kernel_redius : ' + str(self.kernel_redius))
                 
 #        self.pipeline = JoinStrNode(TestProcess,  \
 #                                {self.tmpInOr:self.offset,\
@@ -82,9 +82,9 @@ class TestPipeline(unittest.TestCase):
                                 {'input':self.offset,\
                                  'output':self.offset})
                                  
-        print("NODES : \n" + str(self.pipeline.nodes))
-        print("REPR : \n" + str(self.pipeline.workflow_repr))
-        print("LIST : \n" + str(self.pipeline.workflow_list))
+#         print("NODES : \n" + str(self.pipeline.nodes))
+#         print("REPR : \n" + str(self.pipeline.workflow_repr))
+#         print("LIST : \n" + str(self.pipeline.workflow_list))
         
         
     def test_pipe(self):
@@ -93,6 +93,7 @@ class TestPipeline(unittest.TestCase):
         print("NODES : \n" + str(self.pipeline.nodes))
         print("REPR : \n" + str(self.pipeline.workflow_repr))
         print("LIST : \n" + str(self.pipeline.workflow_list))
+#         self.pipeline()
       
 def test():
     """ Function to execute unitest
@@ -104,7 +105,7 @@ def test():
 if __name__ == "__main__":
     print("RETURNCODE: ", test())
 
-    if 1:
+    if 0:
         import sys
         from soma.qt_gui.qt_backend import QtGui
         app = QtGui.QApplication(sys.argv)

@@ -849,6 +849,7 @@ class CallbackNode(Node):
         """
         #self.__block_output_propagation = False
 #        self.process = process
+        self.id = self.__class__.__module__ + "." + self.name
         if not isinstance(inputs, list):
             inputs = [inputs, ]
         if input_types is not None:

@@ -118,6 +118,11 @@ class TestPipeline(unittest.TestCase):
 
     def test_outputCreation(self):
         self.assertTrue( self.pipeline.output == "/tmp/output_file")
+#         nodes = nodes_with_existing_outputs(self.pipeline)
+#         print('NODES : ' + str(nodes))
+        self.pipeline()
+        self.assertTrue( 
+              os.path.exists('/tmp/output_file') )
 
     def test_partialInputCreation(self):
         for i in range (1,4):
@@ -135,7 +140,7 @@ def test():
 if __name__ == "__main__":
     print("RETURNCODE: ", test())
 
-    if 1:
+    if 0:
         import sys
         from soma.qt_gui.qt_backend import QtGui
         app = QtGui.QApplication(sys.argv)
