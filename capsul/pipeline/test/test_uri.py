@@ -118,11 +118,20 @@ class TestPipeline(unittest.TestCase):
 
     def test_outputCreation(self):
         self.assertTrue( self.pipeline.output == "/tmp/output_file")
-#         nodes = nodes_with_existing_outputs(self.pipeline)
-#         print('NODES : ' + str(nodes))
-        self.pipeline()
-        self.assertTrue( 
-              os.path.exists('/tmp/output_file') )
+        self.assertFalse(os.path.exists('/tmp/output_file') )
+
+        print("NODES : \n" + str(self.pipeline.nodes))
+        
+#        graph = self.pipeline.workflow_graph()
+#        ordered_list = graph.topological_sort()
+        self.pipeline.workflow_ordered_nodes()
+        print("REPR : \n" + str(self.pipeline.workflow_repr))
+        
+#        self.pipeline()
+#        workflow = pipeline_workflow.workflow_from_pipeline(
+#            self.pipeline)
+        
+        self.assertTrue(os.path.exists('/tmp/output_file') )
 
     def test_partialInputCreation(self):
         for i in range (1,4):

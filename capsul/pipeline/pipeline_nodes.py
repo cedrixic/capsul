@@ -877,8 +877,8 @@ class CallbackNode(Node):
             output_types = [Any(Undefined)] * len(outputs)
             
         # private copy of outputs and inputs
-        self._inputs = inputs
-        self._outputs = outputs
+#        self._inputs = inputs
+#        self._outputs = outputs
 
         # format inputs and outputs to inherit from Node class
         node_inputs = [dict(name=i, optional=(i in make_optional),
@@ -892,7 +892,7 @@ class CallbackNode(Node):
                                            
 #        print('Inputs :', str(node_inputs))
 #        print('Outputs :', str(node_outputs))
-        
+        print('Super CallbackNode')
         super(CallbackNode, self).__init__(pipeline, name, node_inputs,
                                            node_outputs)
                                            

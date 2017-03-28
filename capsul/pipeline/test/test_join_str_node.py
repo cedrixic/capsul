@@ -105,7 +105,7 @@ def test():
 if __name__ == "__main__":
     print("RETURNCODE: ", test())
 
-    if 0:
+    if 1:
         import sys
         from soma.qt_gui.qt_backend import QtGui
         app = QtGui.QApplication(sys.argv)

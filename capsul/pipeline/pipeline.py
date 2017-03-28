@@ -255,32 +255,33 @@ class Pipeline(Process):
         for node_name, node in six.iteritems(self.nodes):
             if node_name == "":
                     continue
-#            print('\nNode name :', str(node_name))
-#            print('LOOPS THROUGH NODE PLUGS:')
-#            for parameter_name, plug in six.iteritems(node.plugs):
-#                print('\t', str(parameter_name))
+            print('\nNode name :', str(node_name))
+            print('LOOPS THROUGH NODE PLUGS:')
+            for parameter_name, plug in six.iteritems(node.plugs):
+                print('\t', str(parameter_name))
             for parameter_name, plug in six.iteritems(node.plugs):
                 if parameter_name in ("nodes_activation", "selection_changed"):
                     continue
-#                print(str(parameter_name)+'.input=', str(plug.input))
-#                print(str(parameter_name)+'.output=', str(plug.output))
-#                inp=is_trait_input(plug)
-#                outp=is_trait_output(plug)
-#                st='is '
-#                if inp:
-#                  st='input'
-#                if outp:
-#                  st='output'
-#                print(str(parameter_name), st,
-#                      'and links to', plug.links_to,
-#                      'and from', plug.links_from)
+                print(str(parameter_name)+'.input=', str(plug.input))
+                print(str(parameter_name)+'.output=', str(plug.output))
+                inp=is_trait_input(plug)
+                outp=is_trait_output(plug)
+                st='is '
+                if inp:
+                  st='input'
+                if outp:
+                  st = st + ' output'
+                print(str(parameter_name), st,
+                      'and links to', plug.links_to,
+                      'and from', plug.links_from)
                 if (((node_name, parameter_name) not in self.do_not_export and
                     ((is_trait_output(plug) and not plug.links_to) or
                      (is_trait_input(plug) and not plug.links_from)) and
                     (include_optional or not
                      self.nodes[node_name].get_trait(
                         parameter_name).optional))):
-
+                    for t in self.user_traits() :
+                      print('User_trait : ' + str(t))
                     self.export_parameter(node_name, parameter_name)
 
     def add_trait(self, name, trait):
@@ -941,6 +942,7 @@ class Pipeline(Process):
     def export_parameter(self, node_name, plug_name,
                          pipeline_parameter=None, weak_link=False,
                          is_enabled=None, is_optional=None,
+#                         export_type=None):
                          export_type='both'):
         """ Export a node plug at the pipeline level.
 
@@ -964,8 +966,9 @@ class Pipeline(Process):
             sets the exported parameter to be optional
         export_type: string (optional)
             specifies how trait must be exported : as 'input' only,
-            as 'output', or 'both'
+            as 'output', or 'both' ('None' value has same effect than 'both')
         """
+        
         # Get the node and parameter
         node = self.nodes[node_name]
         # Make a copy of the trait
@@ -979,6 +982,10 @@ class Pipeline(Process):
         # If a tuned name is not specified, used the plug name
         if not pipeline_parameter:
             pipeline_parameter = plug_name
+        print("---IN EXPORT PARAMETER--- Exporting '{0}' of node '{1}' to pipeline "
+                "parameter '{2}'"\
+              .format(plug_name, node_name or 'pipeline_node',
+                    pipeline_parameter))
 
         # Check the the pipeline parameter name is not already used
         if pipeline_parameter in self.user_traits():
@@ -1000,12 +1007,16 @@ class Pipeline(Process):
 
         # Set the trait input property
         trait.input = is_trait_input(trait)
-          
-        # Set the trait input and output properties
-        if export_type is not 'input':
-          trait.input = None
-        if export_type is not 'output':
-          trait.output = None
+        trait.output = is_trait_output(trait)
+  
+        if trait.input is True and trait.output is True :  
+
+          # Set the trait input and output properties
+          if export_type is not 'input':
+            trait.input = None
+          if export_type is not 'output':
+            trait.output = None
+        
 
         # Now add the parameter to the pipeline
         self.add_trait(pipeline_parameter, trait)

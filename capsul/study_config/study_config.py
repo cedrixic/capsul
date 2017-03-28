@@ -350,6 +350,8 @@ class StudyConfig(Controller):
                 # Generate ordered execution list
                 execution_list = []
                 if isinstance(process_or_pipeline, Pipeline):
+                    print('\nStudy_config - is Pipeline instance ' +
+                          str(process_or_pipeline))
                     execution_list = \
                         process_or_pipeline.workflow_ordered_nodes()
                     # Filter process nodes if necessary
@@ -362,6 +364,9 @@ class StudyConfig(Controller):
                         process_or_pipeline._check_temporary_files_for_node(
                             node, temporary_files)
                 elif isinstance(process_or_pipeline, Process):
+                    print('\nStudy_config - is Process instance ' +
+                          str(process_or_pipeline))
+#                          str(process_or_pipeline.__module__.name__))
                     execution_list.append(process_or_pipeline)
                 
                 else:
@@ -370,21 +375,27 @@ class StudyConfig(Controller):
                         "Pipeline instances".format(
                             process_or_pipeline.__module__.name__))
                 print('\nExecution nodes : ' + str(execution_list))
-#                 execution_list = [node for node in execution_list
+#                execution_list = [node for node in execution_list
 #                                   if not isinstance(node, CallbackNode)]
 
                 # Execute each process node element
                 for process_node in execution_list:
+                    print('process_node : '+ str(process_node))
 #                   p = getattr(process_node, 'process', None)
 #                   if p != None : 
                     # Execute the process instance contained in the node
+                    if isinstance(process_node, CallbackNode):
+                      print('process_node is CallbackNode')
+#                    else :
                     if isinstance(process_node, Node):
 #                      and not isinstance(process_node, CallbackNode):
+                      print('process_node is Node')
                       result = self._run(process_node.process, 
                                          output_directory, 
                                          verbose, **kwargs)
                     # Execute the process instance
                     else:
+                      print('process_node is something else')
                       result = self._run(process_node, output_directory,
                                            verbose, **kwargs)
             finally:
